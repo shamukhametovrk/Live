@@ -5,7 +5,6 @@ const ui = {
   chamber: null,    // выбранная камора
   pending: null,    // предмет, которому собираем поля: {item, fields, cmd}
   prep: null,       // начало ряда: {key, keep: [bool], chips: [int]}
-  announced: null,  // число патронов, пока оно горит: {n, at}
 };
 
 const $ = (id) => document.getElementById(id);
@@ -31,6 +30,7 @@ function render(view) {
   const table = $("table");
   table.hidden = false;
   table.replaceChildren(screenFor(view), layer);
+  table.classList.toggle("busy", Play.busy());
   const away = view && view.presence
     ? Object.entries(view.presence).filter(([, s]) => s === "away").map(([p]) => p)
     : [];
@@ -95,7 +95,12 @@ function seatSpot(round, player, radius) {
   const me = circle.includes(Net.me) ? Net.me : circle[0];
   const i = (circle.indexOf(player) - circle.indexOf(me) + circle.length) % circle.length;
   const angle = Math.PI / 2 + (2 * Math.PI * i) / circle.length;
-  return { x: 50 + radius * Math.cos(angle), y: 50 + radius * Math.sin(angle) };
+  return { x: 50 + radius * Math.cos(angle), y: 50 + radius * Math.sin(angle), angle };
+}
+
+// Угол места в градусах — для метки хода на ободе.
+function seatDeg(round, player) {
+  return (seatSpot(round, player, 0).angle * 180) / Math.PI;
 }
 
 function at(spot) {
@@ -111,6 +116,8 @@ function game(view) {
     el("div", { class: "felt" }),
     el("div", { class: "round-mark" },
       `раунд ${view.results.length + 1}/${view.settings.rounds}`),
+    el("div", { class: "turn-marker", style: `--a:${seatDeg(round, round.active)}deg` },
+      el("span", { class: "dot" })),
     row(round, spread),
     ...round.circle.filter((p) => p !== Net.me).map((p) => otherHand(round, p)),
     ...round.circle.map((p) => player(round, p)),
@@ -142,16 +149,11 @@ function row(round, spread) {
       ? el("span", { class: "chips-on" }, chipStack(spread.chips[i])) : null;
     return el("div", {
       class: cls,
+      "data-chamber": i,
       onclick: shooting && !c.used ? () => pickChamber(i) : null,
     }, el("span", { class: "core" }), weight, chips);
   });
-  // Перерисовка не должна перезапускать вспышку: продолжаем с того же места.
-  const announced = ui.announced !== null
-    ? el("div", {
-      class: "announced",
-      style: `animation-delay:-${Date.now() - ui.announced.at}ms`,
-    }, ui.announced.n) : null;
-  return el("div", { class: "row" }, cells, announced);
+  return el("div", { class: "row" }, cells);
 }
 
 function player(round, p) {
@@ -315,78 +317,6 @@ function preparing(round, spread) {
     }, "Готово")));
 }
 
-// Подписи: сообщения движка всплывают у игрока, к которому относятся
-
-const QUIET = new Set(["prepared", "turn_passed", "effect_removed", "joined",
-  "left", "settings_changed", "reconnected", "game_started", "spread_started"]);
-
-function onMessage(m) {
-  if (m.type === "loaded") {
-    ui.announced = { n: m.announced, at: Date.now() };
-    setTimeout(() => { ui.announced = null; if (ui.view) render(ui.view); }, 2500);
-    return;
-  }
-  if (QUIET.has(m.type)) return;
-  bubble(caption(m), m.type === "shot" && m.loaded && m.damage ? "hit" : "",
-    m.target ?? m.player ?? m.owner ?? m.actor ?? m.shooter ?? null);
-}
-
-// Подпись: значок предмета и короткий итог; без предмета — слово.
-function caption(m) {
-  const sign = (n) => (n >= 0 ? `+${n}` : `${n}`);
-  switch (m.type) {
-    case "shot": return !m.loaded ? "щёлк" : m.damage === 0 ? "щит" : `−${m.damage}`;
-    case "died": return "✝";
-    case "chip_earned": return "+◆";
-    case "effect_added": return [icon(EFFECT_ITEM[m.effect.type])];
-    case "weight_seen": return [icon("one-eye"), m.weight === null ? "" : ` ${m.weight}`];
-    case "weights_seen": return [icon("wide-eyes"), m.weights === null ? "" : ` ${m.weights.join(" ")}`];
-    case "reversed": return [icon("reverse")];
-    case "cartridge_added": return [icon("more"), " +1"];
-    case "cartridge_removed": return [icon("scared"), " −1"];
-    case "peeked": return [icon("peek"), m.loaded ? " патрон" : " пусто"];
-    case "shaken": return [icon("shake")];
-    case "healed": return [icon(m.item), ` +${m.amount}`];
-    case "gambled": return [icon("dubious"), ` ${sign(m.amount)}`];
-    case "passed": return [icon("pass")];
-    case "item_stolen": return [icon("share"), " ", icon(m.item)];
-    case "chip_stolen": return [icon("share"), " ◆"];
-    case "jackpot": return [icon("jackpot"), " +3◆"];
-    case "wasted": return [icon(m.item), " впустую"];
-    default: return describe(m);
-  }
-}
-
-function onRejected(code) {
-  bubble(REJECTIONS[code] || code, "bad", null);
-}
-
-// Слой подписей живёт поверх стола и переживает перерисовку.
-const layer = el("div", { class: "bubbles" });
-
-function bubble(text, kind, playerId) {
-  const table = $("table");
-  const seat = playerId === null ? null
-    : table.querySelector(`.seat[data-player="${playerId}"]`);
-  const box = table.getBoundingClientRect();
-  let x = box.width / 2, y = Math.min(box.width, box.height) * 0.38;
-  if (seat) {
-    const r = seat.getBoundingClientRect();
-    x = r.left + r.width / 2 - box.left;
-    y = r.top - box.top;
-  }
-  // Подписи у одного места встают столбиком, а не друг на друга.
-  const key = String(playerId);
-  const stacked = [...layer.children].filter((b) => b.dataset.key === key).length;
-  const node = el("div", {
-    class: `bubble ${kind}`,
-    "data-key": key,
-    style: `left:${x}px;top:${y - stacked * 30}px`,
-  }, text);
-  layer.append(node);
-  setTimeout(() => node.remove(), 2600);
-}
-
 // Конец игры
 
 function finished(view) {
@@ -402,20 +332,3 @@ function finished(view) {
     el("div", { class: "actions" },
       el("button", { onclick: () => Net.send({ type: "history" }) }, "История")));
 }
-
-// Запуск
-
-Net.onSnapshot = render;
-Net.onMessage = onMessage;
-Net.onRejected = onRejected;
-
-// Страницу отдаёт сам движок — подключаемся к тому же адресу.
-Net.connect(location.host || "localhost:8000");
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && (ui.pending || ui.chamber !== null)) {
-    ui.pending = null;
-    ui.chamber = null;
-    if (ui.view) render(ui.view);
-  }
-});

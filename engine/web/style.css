@@ -313,7 +313,7 @@ input:focus, select:focus { outline: none; border-color: var(--c-accent); }
   font: 700 8cqw var(--heading-font);
   color: var(--c-danger);
   text-shadow: 0 0 3cqw rgb(var(--c-danger-rgb) / 0.8);
-  animation: flash-out 2.5s ease-out forwards;
+  animation: flash-out 1.8s ease-out forwards;
 }
 
 /* Игрок у края стола */
@@ -578,4 +578,135 @@ footer a { color: var(--c-text-2); }
 
 @media (prefers-reduced-motion: reduce) {
   .logo::before { animation: none; }
+}
+
+/* ================================================================
+   Анимации (их запускает play.js по сообщениям движка)
+   ================================================================ */
+
+/* Пока идёт анимация, ввод ждёт: стол ещё старый */
+#table.busy .game { pointer-events: none; }
+
+/* Метка хода: огонёк на ободе у ходящего */
+.turn-marker {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--a));
+  pointer-events: none;
+}
+.turn-marker .dot {
+  position: absolute;
+  left: 34cqw;
+  top: -1.2cqw;
+  width: 2.4cqw;
+  height: 2.4cqw;
+  border-radius: 50%;
+  background: var(--c-accent);
+  box-shadow: 0 0 2cqw var(--c-accent), 0 0 5cqw rgb(var(--c-accent-rgb) / 0.6);
+}
+.turn-marker.moving { animation: turn-run 0.45s ease-in-out; }
+@keyframes turn-run {
+  from { transform: rotate(var(--from)); }
+  to   { transform: rotate(var(--a)); }
+}
+
+/* Заряжание: каморы ложатся на стол одна за другой */
+.chamber.deal {
+  animation: deal 0.4s ease-out both;
+  animation-delay: calc(var(--i) * 70ms);
+}
+@keyframes deal {
+  from { opacity: 0; transform: translateY(-6cqw) scale(0.6); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Выстрел: камора вздрагивает, потом вскрывается */
+.chamber.fire {
+  animation: fire 0.35s ease-out;
+  border-color: var(--c-text);
+}
+@keyframes fire {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.25); box-shadow: 0 0 4cqw rgb(255 255 255 / 0.7); }
+  100% { transform: scale(1); }
+}
+.chamber.fire.loaded { animation: fire 0.35s ease-out, burn 1s ease-out 0.35s; }
+@keyframes burn {
+  from { box-shadow: 0 0 6cqw var(--c-danger); opacity: 1; }
+}
+.chamber.shaken,
+.row.shaken { animation: wobble 0.5s ease-in-out; }
+@keyframes wobble {
+  25% { transform: translate(-50%, -50%) rotate(-3deg); }
+  75% { transform: translate(-50%, -50%) rotate(3deg); }
+}
+.chamber.shaken { animation-name: wobble-one; }
+@keyframes wobble-one {
+  25% { transform: rotate(-12deg); }
+  75% { transform: rotate(12deg); }
+}
+
+/* Попадание: стол трясёт, игрока заливает кровью, огонёк гаснет */
+.board.shake { animation: shake 0.45s ease-in-out; }
+@keyframes shake {
+  20% { transform: translate(-1.2cqw, 0.6cqw); }
+  40% { transform: translate(1cqw, -0.8cqw); }
+  60% { transform: translate(-0.6cqw, 0.4cqw); }
+  80% { transform: translate(0.4cqw, -0.2cqw); }
+}
+.seat.hit { animation: hit 0.9s ease-out; }
+@keyframes hit {
+  0%   { background: rgb(var(--c-danger-rgb) / 0.7); border-color: var(--c-danger); box-shadow: 0 0 5cqw var(--c-danger); }
+  100% { background: rgb(5 15 15 / 0.85); }
+}
+.seat.shielded { animation: shielded 0.9s ease-out; }
+@keyframes shielded {
+  0%   { border-color: var(--c-accent-2); box-shadow: 0 0 5cqw var(--c-accent-2); }
+}
+.life.dying { animation: life-out 0.8s ease-in forwards; }
+@keyframes life-out {
+  0%   { transform: scale(1.8); }
+  100% { transform: scale(1); background: transparent; box-shadow: none; outline: 0.2cqw solid var(--c-text-3); }
+}
+.seat.dying { animation: seat-die 1s ease-in forwards; }
+@keyframes seat-die {
+  0%   { box-shadow: 0 0 6cqw var(--c-danger); }
+  100% { opacity: 0.35; filter: grayscale(1); }
+}
+
+/* Вспышка выстрела */
+.flash {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(255 230 230 / 0.55), rgb(var(--c-danger-rgb) / 0.35) 60%, transparent);
+  animation: flash 0.5s ease-out forwards;
+}
+@keyframes flash {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* Летящий значок предмета */
+.flying {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  z-index: 7;
+  box-shadow: 0 0 18px currentColor;
+}
+
+.bubble.win {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  font: 700 16px var(--heading-font);
+  box-shadow: 0 0 18px rgb(var(--c-accent-rgb) / 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board.shake, .flash, .chamber.deal, .turn-marker.moving { animation: none; }
 }
