@@ -5,55 +5,53 @@
 [![uv](https://img.shields.io/badge/uv-managed-DE5FE9?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
 [![Docs](https://github.com/CaseyJohnson-RS/Live/actions/workflows/docs.yml/badge.svg)](https://caseyjohnson-rs.github.io/Live/)
 
-Сайт **Live** — компьютерной игры по мотивам русской рулетки.
+**Live** — компьютерная игра по мотивам русской рулетки. Этот репозиторий
+объединяет всё, из чего она строится: правила, движок и клиент.
 
-## Описание
-
-Здесь живёт сайт игры: главная страница, полный свод правил в разделе
-«Об игре» и блог о том, как движется проект. Сайт собирается на
-[MkDocs Material](https://squidfunk.github.io/mkdocs-material/) и
-публикуется на GitHub Pages при каждом пуше в `main`.
-
-Сайт: <https://caseyjohnson-rs.github.io/Live/>
-
-## Проект
-
-| Репозиторий | Что внутри |
-| --- | --- |
-| **Live** | Сайт игры: правила и блог (этот репозиторий) |
-| [LiveEngine](https://github.com/CaseyJohnson-RS/LiveEngine) | Сервер, который ведёт игру |
-| Клиент | Приложение, за которым будет сидеть игрок (в планах) |
+Сайт с правилами и документацией: <https://caseyjohnson-rs.github.io/Live/>
 
 ## Что где лежит
 
 ```text
-docs/
-├── index.md                главная: кинескоп, проект, корни
-├── about/                  «Об игре»: обзор, правила, каталог, глоссарий
-├── blog/                   хронология проекта
-├── assets/                 фишки, обложки референсов, карта изгиба экрана
-└── stylesheets/            тема «Бутылочное стекло»: палитра, общее,
-                            карточки, главная, блог, правила
-tools/
-└── table_chips.py          генератор фишек на столе вокруг кинескопа
-mkdocs.yml                  настройки сайта и навигация
+docs/                   исходники сайта (MkDocs Material)
+├── index.md            главная: три раздела
+├── rules/              правила: обзор, свод глав, каталог предметов, глоссарий
+├── engine/             движок: архитектура и журнал решений
+├── client/             клиент
+├── assets/             картинки для страниц
+└── stylesheets/        тема «Бутылочное стекло»: палитра, общее, карточки, правила
+engine/                 движок на Python: код, тесты, свой pyproject.toml
+client/                 клиент (пока пусто)
+mkdocs.yml              настройки сайта и навигация
+pyproject.toml          зависимости сайта (uv)
 ```
 
-## Локальный запуск
+Документация лежит отдельно от кода: текст о движке — в `docs/engine/`, сам
+движок — в `engine/`. Сайт публикуется на GitHub Pages при каждом пуше в
+`main`.
+
+## Локальный запуск сайта
 
 ```bash
 uv sync
 uv run mkdocs serve
 ```
 
-Сайт откроется на <http://127.0.0.1:8000/>.
-
-Фишки вокруг кинескопа на главной нарисованы генератором. Другой расклад
-или плотность — параметры в начале `tools/table_chips.py`, затем:
+Сайт откроется на <http://127.0.0.1:8000/>. Проверка, как в CI:
 
 ```bash
-uv run python tools/table_chips.py
+uv run mkdocs build --strict
 ```
+
+## Тесты движка
+
+```bash
+cd engine
+uv sync
+uv run pytest
+```
+
+Подробнее — в [engine/README.md](engine/README.md).
 
 ---
 

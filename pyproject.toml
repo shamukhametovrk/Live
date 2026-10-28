@@ -1,7 +1,7 @@
 [project]
 name = "live"
 version = "0.1.0"
-description = "Правила игры Live"
+description = "Сайт и документация игры Live"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []

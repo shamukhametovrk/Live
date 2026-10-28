@@ -32,6 +32,10 @@
   --chrome: #c3ccd4;
   --blood: #ff3355;
   --blood-rgb: 255 51 85;
+  --amber: #ffb454;
+  --amber-rgb: 255 180 84;
+  --phosphor: #74ff9a;
+  --phosphor-rgb: 116 255 154;
 
   /* ---------- Роли ---------- */
   --c-bg: var(--velvet-900);
@@ -50,12 +54,17 @@
   --c-metal: var(--chrome);
   --c-danger: var(--blood);
   --c-danger-rgb: var(--blood-rgb);
+  --c-param: var(--amber);         /* янтарь: ссылки на параметры игры */
+  --c-param-rgb: var(--amber-rgb);
+  --c-explain: var(--phosphor);    /* люминофор: ссылки «что это значит?» */
+  --c-explain-rgb: var(--phosphor-rgb);
 
   /* ---------- Игровые сущности (черновик — уточнится с правилами) ---------- */
   --c-hit: var(--blood);
   --c-item-common: var(--steel);
-  --c-item-rare: var(--chrome);
-  --c-item-ceiling: var(--uv);
+  --c-item-rare: var(--cyan);
+  --c-item-ceiling: var(--amber);
+  --c-item-ceiling-rgb: var(--amber-rgb);
 
   /* Без var(--md-text-font-family): на :root её ещё нет, и ссылка на неё
      сделала бы всё значение недействительным */

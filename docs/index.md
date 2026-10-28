@@ -1,121 +1,68 @@
----
-hide:
-  - navigation
-  - toc
-  - footer
----
+# Игра Live
 
-<script>
-/* Монитор включается, когда главную открыли заново или перезагрузили.
-   Не включается при переходе с другой страницы сайта и по «Назад»: там
-   экран уже горит. И никогда — если посетитель отключил анимацию.
-   Стоит в начале страницы, чтобы включённый экран не мелькнул заранее */
-(function () {
-  try {
-    var nav = performance.getEntriesByType("navigation")[0];
-    var type = nav ? nav.type : "navigate";
-    var fromSite = false;
-    try {
-      fromSite = !!document.referrer &&
-        new URL(document.referrer).origin === location.origin;
-    } catch (e) {}
-    var boot = type === "reload" || (type === "navigate" && !fromSite);
-    if (boot && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      document.documentElement.classList.add("crt-boot");
-    }
-  } catch (e) {}
-})();
-</script>
+Компьютерная игра по мотивам русской рулетки. 
 
-<svg class="crt__defs" aria-hidden="true">
-<filter id="crt-barrel" x="0" y="0" width="1" height="1" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">
-<feImage href="assets/crt/barrel-map.png" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map"/>
-<feDisplacementMap in="SourceGraphic" in2="map" scale="0.1" xChannelSelector="R" yChannelSelector="G"/>
-</filter>
-</svg>
 
-<div class="stage" markdown>
+<div class="grid cards" markdown>
 
-<img class="table-layer table-layer--back" src="assets/table-back.svg" alt="" aria-hidden="true">
+-   **[Правила](rules/index.md)**
 
-<div class="intro crt" markdown>
-
-<div class="crt__image" markdown>
-
-<p class="status"><span class="status__dot" aria-hidden="true"></span>В разработке</p>
-
-<div class="hero" markdown>
-
-<div class="hero__logo"><span class="hero__rec" aria-hidden="true"></span><img src="logo.svg" alt="Live"></div>
-
-<p class="hero__tagline">Игра по мотивам русской рулетки</p>
+    Что такое Live и как в неё играть: свод правил, каталог предметов и
+    глоссарий.
 
 </div>
 
-<div class="teaser">
-<p>Садятся несколько — встаёт один.</p>
-<p>Выстрел в себя покупает будущее.</p>
-<p>Каждый хочет обмануть.</p>
-<p class="teaser__call">Наблюдай. Считай. Рискуй.</p>
-<p class="teaser__coda">Удачи.</p>
-</div>
+<div class="grid cards" markdown>
+
+-   **[Движок](engine/index.md)**
+
+    Как устроен сервер, который ведёт игру: архитектура и журнал решений.
 
 </div>
 
-</div>
+<div class="grid cards" markdown>
 
-<img class="table-layer table-layer--front" src="assets/table-front.svg" alt="" aria-hidden="true">
+-   **[Клиент](client/index.md)**
 
-</div>
-
-## Ставки пока не принимаются
-
-Зал ещё закрыт.
-
-Движок в разработке, клиент — в планах. Но что это за игра можно узнать уже сейчас, а когда откроются двери — следить в блоге.
-
-[:octicons-arrow-right-24: Об игре](about/index.md){ .md-button .md-button--primary }
-[:octicons-arrow-right-24: Открыть блог](blog/index.md){ .md-button }
-
-## Проект
-
-<div class="grid cards project" markdown>
-
--   :live-cartridge:{ .chip-emblem } **Об игре**
-
-    ---
-
-    Описание игры, иллюстрации, правила.
-
-    [:octicons-arrow-right-24: Читать](about/index.md)
-
--   :material-engine-outline:{ .chip-emblem } **Движок**
-
-    ---
-
-    Логический движок игры, который будет держать игру и контролировать выполнения правил. В данный момент разрабатывается.
-
-    [:octicons-mark-github-16: LiveEngine](https://github.com/CaseyJohnson-RS/LiveEngine) ·
-    [документация](https://caseyjohnson-rs.github.io/LiveEngine/)
-
--   :material-monitor-dashboard:{ .chip-emblem } **Клиент**
-
-    ---
-
-    Сама игра. Возможно, здесь будет ссылка на стим или Itch.io в будущем.
-
-    *В планах*
-
--   :material-timeline-text-outline:{ .chip-emblem } **Блог**
-
-    ---
-
-    Как проект движется от идеи к релизу:
-    хронология и рассказы о вехах.
-
-    [:octicons-arrow-right-24: Открыть блог](blog/index.md)
+    Приложение, за которым сидит игрок.
 
 </div>
+
+## Об игре
+
+<p class="epigraph">Не хотелось бы полагаться на удачу? Возможно, но риск правит балом.</p>
+
+<figure class="illus">
+<div class="illus__empty"></div>
+<figcaption>Иллюстрация: стол с бархатом и в центре каморный ряд, за столом сидят 4 человека, у которых вместо головы телевизоры с кинескопом, один из людей направляет револьвер себе в экран.</figcaption>
+</figure>
+
+
+### Лирика
+
+Меня вдохновляют такие люди, как [Майк Клубника](https://mike-klubnika-ru.fandom.com/ru/wiki/%D0%9C%D0%B0%D0%B9%D0%BA_%D0%9A%D0%BB%D1%83%D0%B1%D0%BD%D0%B8%D0%BA%D0%B0), и мне хотелось бы так же, как он, выпустить свою игру. Я не постеснялся и взял его идею на доработку =3
+
+В чем же моя доработка? В своей основе игра [Buckshot Roulette](https://en.wikipedia.org/wiki/Buckshot_Roulette) держит страх и ощущение предрешённости, ощущение судьбы. Когда мы направляем дуло на себя мы определённо знаем, что случайность в начале раунда всё за нас решила, но нам так хочется узнать, что же там. И, когда игра вышла на уровень мультиплеера, всем, как ни странно, понравилось. Понравилось настолько, что игра разлетелась на более 6 миллионов копий. Однако, я считаю мультиплеер... <s>провальным</s> мягко говоря *неудачным*.  «Серьёзное заявление, чем докажешь?», скажете вы, поэтому ловите мои аргументы.
+
+1. В мультиплеерной игре меняется темп. Если вас раздражало само существование [наручников](https://buckshot-roulette-and-multiplayer.fandom.com/ru/wiki/%D0%9D%D0%B0%D1%80%D1%83%D1%87%D0%BD%D0%B8%D0%BA%D0%B8) даже в одиночном режиме, то в мультиплеере это возводилось в абсолют. Мало того, что ты подолгу сидишь пока пройдут два круга, и в компании из 4-х человек это пропуск 6-ти гильз минимум, так еще и... вероятно, проигрыш? В мультиплеере не должно быть предметов, которые глушат темп.
+
+2. Buckshot так и не воспользовался тем, на чём держится любая соревновательная азартная игра, — это блеф. Можно возразить, что лупа и телефон дают знание. Но знание, которое нельзя скрыть, — это не блеф. Посмотрел в лупу, увидел боевой — стреляешь в соперника. Увидел холостой — стреляешь в себя ради лишнего хода. Твоё действие тут же выдаёт, что ты узнал, и все за столом знают ровно столько же, сколько и ты. У тебя нет причин действовать вопреки своему знанию, а значит, и у остальных нет повода сомневаться в твоём ходе. Настоящий блеф появляется там, где обман может быть выгоден и наказуем. В Buckshot же оптимальный ход почти всегда очевиден, и вся «психология» сводится к подсчёту патронов.
+
+3. Последнее, что стоит сказать, — это невозможность хоть как-то повлиять на судьбу. Понимаю, что довод спорный, ведь есть пиво и инвертор. Но это реакция на расклад, а не влияние на него. Патроны уже легли, и ты только пытаешься как-то играть с тем, что выпало. Повлиять на то, каким будет следующий расклад патронов, нельзя ничем. А раз риск не может купить ничего, кроме лишнего хода, рисковать осмысленно не получается — остаётся только угадывать. Мне же хочется, чтобы смелость окупалась: чтобы выстрел в себя был не просто лотереей, а вложением в будущее, которое ты сам себе заработал.
+
+К чему это всё? Я со своим другом поспорил на интерес, кто первый выпустит свою игру и получит **100 000** скачиваний. Таким образом, мы здесь.
+
+Пожелайте мне удачи.
+
+### Правила в двух словах
+
+- Игроки садятся за стол. Минимум 2 игрока.
+- На столе лежит ряд камор. В ряду есть определённое количество патронов. Каждый игрок знает, сколько, но не знает где.
+- В свой ход игрок выбирает камору и цель — соперника или себя — и
+  стреляет. Попадание отнимает жизнь.
+- Выстрел в себя — риск, но оправданный. При выстреле в себя игрок получает фишки, которые позволяют скрыто влиять на расклад патронов в следующем цикле.
+- Предметы на руках гнут правила: подсказывают, меняют ряд, лечат, путают.
+- Последний живой выигрывает раунд.
 
 ## Вдохновение и истоки
 
@@ -150,38 +97,4 @@ hide:
 
 </div>
 
-<script>
-/* Включение стартует, когда страница загрузилась (шрифты, логотип),
-   но не позже чем через 2,5 с. После — экран в обычном режиме */
-(function () {
-  var root = document.documentElement;
-  if (!root.classList.contains("crt-boot")) return;
-  var started = false;
-  function powerOn() {
-    if (started) return;
-    started = true;
-    root.classList.add("crt-boot--go");
-  }
-  var screen = document.querySelector(".crt__image");
-  if (screen) {
-    screen.addEventListener("animationend", function (e) {
-      if (e.animationName === "crt-power-on") {
-        root.classList.remove("crt-boot", "crt-boot--go");
-      }
-    });
-  }
-  if (document.readyState === "complete") powerOn();
-  else window.addEventListener("load", powerOn);
-  setTimeout(powerOn, 2500);
-})();
-
-/* При уходе со страницы монитор гаснет. Пока грузится следующая страница
-   (и при перезагрузке), браузер держит последний кадр старой — пусть на
-   нём будет тёмное стекло, а не горящий экран. Если ухода не случилось
-   (например, клик по ссылке на почту), через 1,5 с экран загорается снова */
-window.addEventListener("beforeunload", function () {
-  var root = document.documentElement;
-  root.classList.add("crt-off");
-  setTimeout(function () { root.classList.remove("crt-off"); }, 1500);
-});
-</script>
+<div class="home-marker"></div>

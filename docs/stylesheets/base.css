@@ -148,14 +148,15 @@ body::after {
   text-shadow: 0 0 8px rgb(var(--c-accent-2-rgb) / 0.6);
 }
 
-/* Место, где вводится термин: **термин**{ #id .term } */
+/* Термин: в правилах — ссылка в глоссарий [термин](../glossary.md#t-id){ .term },
+   в самом глоссарии — запись **Термин**{ #t-id .term } */
 .md-typeset .term {
   color: var(--c-accent);
   font-weight: 700;
   text-shadow: 0 0 6px rgb(var(--c-accent-rgb) / 0.35);
   scroll-margin-top: 4rem;
 }
-/* Переход из глоссария: термин ненадолго вспыхивает */
+/* Переход из правил: запись в глоссарии ненадолго вспыхивает */
 .md-typeset .term:target {
   animation: term-flash 1.6s ease-out;
 }
@@ -291,4 +292,65 @@ body::after {
   color: var(--c-bg);
   box-shadow: 0 0 16px rgb(var(--c-accent-rgb) / 0.5);
   text-shadow: none;
+}
+
+/* Главная: левая панель остаётся на месте (контент не съезжает), но пустая.
+   Маркер .home-marker стоит только в docs/index.md. Только на десктопе —
+   на узких экранах эта панель служит выдвижным меню */
+@media screen and (min-width: 76.25em) {
+  .md-main__inner:has(.home-marker) .md-sidebar--primary .md-nav {
+    visibility: hidden;
+  }
+}
+
+/* Место под полосу прокрутки резервируется всегда: иначе короткая страница
+   (главная) без полосы шире длинных, и контент при переходе сдвигается */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Ссылка на правило выбора числа или игрока:
+     [как выбирается](../parameters.md#якорь){ .param }
+   Не термин (бирюзовый), а отсылка к параметрам — янтарная, без подчёркивания,
+   с частыми короткими сбоями: цвета расходятся и текст дёргается. Без дубля текста в
+   атрибуте, как у .glitch, — только text-shadow и transform */
+.md-typeset a.param {
+  display: inline-block;
+  color: var(--c-param);
+  font-weight: 600;
+  text-decoration: none;
+  /* цикл 2 с, два сбоя за цикл — примерно раз в секунду */
+  animation: param-glitch 2s steps(1, end) infinite;
+}
+.md-typeset a.param:is(:hover, :focus) {
+  color: var(--c-param);
+  filter: brightness(1.25);
+  animation-duration: 0.7s;
+}
+/* Тот же глитч другим цветом — для ссылок-объяснений («что это значит?»),
+   которые ведут не к параметрам:
+     [что это значит?](../chips.md#якорь){ .param .explain } */
+.md-typeset a.param.explain,
+.md-typeset a.param.explain:is(:hover, :focus) {
+  color: var(--c-explain);
+}
+@keyframes param-glitch {
+  0%, 12%, 19%, 55%, 61%, 100% { transform: none; text-shadow: none; }
+  13%, 17% {
+    transform: translateX(-1px) skewX(-6deg);
+    text-shadow: -2px 0 rgb(var(--c-accent-rgb) / 0.9), 2px 0 rgb(var(--c-danger-rgb) / 0.8);
+  }
+  15%, 58% {
+    transform: translateX(2px);
+    text-shadow: 2px 0 rgb(var(--c-accent-rgb) / 0.9), -2px 0 rgb(var(--c-danger-rgb) / 0.8);
+  }
+  56% {
+    transform: translateX(-2px) skewX(5deg);
+    text-shadow: -2px 0 rgb(var(--c-accent-rgb) / 0.9), 2px 0 rgb(var(--c-danger-rgb) / 0.8);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .md-typeset a.param {
+    animation: none;
+  }
 }

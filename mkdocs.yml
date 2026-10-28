@@ -3,8 +3,11 @@ site_description: Live — компьютерная игра по мотивам
 site_url: https://caseyjohnson-rs.github.io/Live/
 copyright: © 2026 Casey Johnson. Все права защищены.
 
-# Битый якорь (например, в глоссарии) должен ронять сборку в --strict
+# С --strict любое из этого роняет сборку: битый якорь (например, в
+# глоссарии), ссылка в никуда, страница, которой нет в навигации
 validation:
+  omitted_files: warn
+  unrecognized_links: warn
   anchors: warn
 
 theme:
@@ -23,7 +26,7 @@ theme:
     accent: custom
   features:
     - navigation.tabs
-    - navigation.sections
+    - navigation.expand
     - navigation.indexes
     - navigation.top
     - navigation.footer
@@ -50,9 +53,12 @@ extra_css:
   - stylesheets/palette.css
   - stylesheets/base.css
   - stylesheets/cards.css
-  - stylesheets/home.css
-  - stylesheets/blog.css
   - stylesheets/rules.css
+
+# Формулы (MathJax); точная версия, чтобы сайт не менялся сам
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
 
 plugins:
   - search:
@@ -71,13 +77,11 @@ markdown_extensions:
   - md_in_html
   - def_list
   - pymdownx.details
+  - pymdownx.arithmatex:
+      generic: true
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-      # свои иконки: overrides/.icons/live/*.svg → :live-имя:
-      options:
-        custom_icons:
-          - overrides/.icons
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -86,17 +90,75 @@ markdown_extensions:
 
 nav:
   - Главная: index.md
-  - Блог: blog/index.md
-  - Об игре:
-      - about/index.md
-      - Правила:
-          - about/rules/index.md
-          - about/rules/table.md
-          - about/rules/shot.md
-          - about/rules/spread.md
-          - about/rules/chips.md
-          - about/rules/hand.md
-          - about/rules/round.md
-          - about/rules/cheatsheet.md
-      - about/items/index.md
-      - Глоссарий: about/glossary.md
+  - Правила:
+      - rules/index.md
+      - rules/structure.md
+      - Элементы:
+          - rules/elements/index.md
+          - rules/elements/player.md
+          - rules/elements/chamber-row.md
+          - rules/elements/hand.md
+          - rules/elements/chips.md
+      - Игровой цикл:
+          - rules/chapters/index.md
+          - rules/chapters/game.md
+          - rules/chapters/round.md
+          - rules/chapters/spread.md
+          - rules/chapters/turn.md
+      - Предметы:
+          - rules/items/index.md
+          - Знание:
+              - rules/items/one-eye.md
+              - rules/items/wide-eyes.md
+          - Ряд:
+              - rules/items/reverse.md
+              - rules/items/more.md
+              - rules/items/scared.md
+              - rules/items/peek.md
+              - rules/items/shake.md
+          - Жизни:
+              - rules/items/water.md
+              - rules/items/dubious.md
+              - rules/items/like-new.md
+          - Ход:
+              - rules/items/pass.md
+              - rules/items/double.md
+              - rules/items/full-force.md
+              - rules/items/shield.md
+          - Соперники:
+              - rules/items/try-this.md
+              - rules/items/play-along.md
+              - rules/items/share.md
+          - Фишки:
+              - rules/items/jackpot.md
+      - rules/visibility.md
+      - rules/parameters.md
+      - Глоссарий: rules/glossary.md
+  - Движок:
+      - engine/index.md
+      - Архитектура:
+          - Обзор: engine/architecture/README.md
+          - Гексагональная архитектура: engine/architecture/zen/hexarch.md
+          - Принципы: engine/architecture/zen/principles.md
+          - Доменный слой:
+              - engine/architecture/domain/README.md
+              - Игра: engine/architecture/domain/game.md
+              - Партия: engine/architecture/domain/match.md
+              - Подготовка: engine/architecture/domain/preparation.md
+              - Раунд: engine/architecture/domain/round.md
+          - engine/architecture/application/README.md
+          - engine/architecture/adapters/README.md
+      - Решения:
+          - engine/decisions/README.md
+          - engine/decisions/0001-shot-is-an-item.md
+          - engine/decisions/0002-round-is-row-and-layouts.md
+          - engine/decisions/0003-rules-are-domain-functions.md
+          - engine/decisions/0004-client-builds-world-view.md
+          - engine/decisions/0005-fair-first-move-on-the-fly.md
+          - engine/decisions/0006-mutable-entities-in-repository.md
+          - engine/decisions/0007-sampler-outside-core.md
+          - engine/decisions/0008-match-not-party.md
+          - engine/decisions/0009-revealed-positions-in-round.md
+          - engine/decisions/0010-semantic-messages.md
+          - engine/decisions/0011-rules-return-events-and-messages.md
+  - Клиент: client/index.md

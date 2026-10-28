@@ -1,4 +1,4 @@
-/* Раздел «Об игре»: элементы для чтения и глоссарий */
+/* Раздел «Правила»: элементы для чтения и глоссарий */
 
 /* ================================================================
    Правила: элементы для чтения
@@ -12,6 +12,11 @@
   border-radius: 0;
   color: var(--c-text-2);
   font-style: italic;
+}
+/* Под заголовком второго уровня (раздел на главной) подтягивать не к чему —
+   у h2 своё подчёркивание, нужен нормальный зазор */
+.md-typeset h2 + .epigraph {
+  margin-top: 1.2rem;
 }
 
 /* Совет — ультрафиолетом: подсказка игроку, не правило */
@@ -48,7 +53,7 @@
   border: 1px solid var(--c-border);
   border-radius: 0.2rem;
 }
-/* Заглушка — маленький кинескоп: те же развёртка и глитч, что на главной.
+/* Заглушка — маленький кинескоп: развёртка и глитч.
    Полоса помех — верхний слой фона: в обычных кадрах он спрятан над
    экраном, в кадрах сбоя выезжает на новую высоту (второго псевдоэлемента
    нет — ::after занят надписью) */
@@ -71,7 +76,7 @@
   box-shadow: inset 0 0 3rem rgb(0 0 0 / 0.7);
   animation: illus-glitch 7s steps(1, end) infinite;
 }
-/* Полоса развёртки — как на главной (кадры crt-roll из home.css) */
+/* Полоса развёртки, бегущая сверху вниз */
 .md-typeset .illus__empty::before {
   content: "";
   position: absolute;
@@ -88,7 +93,11 @@
   );
   animation: crt-roll 6s linear infinite;
 }
-/* Кадры глитча главной без фильтра изгиба: его здесь нет, а ссылка на
+@keyframes crt-roll {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(340%); }
+}
+/* Кадры глитча без фильтра изгиба: его здесь нет, а ссылка на
    несуществующий фильтр ломает отрисовку */
 @keyframes illus-glitch {
   0%, 40%, 41%, 93%, 97%, 100% {
@@ -241,7 +250,7 @@
 .md-typeset .cls--rare { color: var(--c-item-rare); }
 .md-typeset .cls--ceiling {
   color: var(--c-item-ceiling);
-  text-shadow: 0 0 6px rgb(var(--c-accent-2-rgb) / 0.6);
+  text-shadow: 0 0 6px rgb(var(--c-item-ceiling-rgb) / 0.6);
 }
 /* в заголовках метка не должна наследовать неон заголовка */
 .md-typeset h3 .cls {
@@ -261,6 +270,10 @@
 }
 .md-typeset .nest__box .nest__box {
   margin-top: 0.8rem;
+}
+/* markdown внутри рамок оборачивает название и текст в абзац — без отступов */
+.md-typeset .nest p {
+  margin: 0;
 }
 .md-typeset .nest__name {
   display: block;
@@ -288,4 +301,86 @@
 .md-typeset dl dd {
   margin-top: 0.2em;
   margin-bottom: 0;
+}
+
+/* Главная мысль страницы — одной строкой, подсвеченной неоном:
+     <p class="keyrule">…</p> */
+.md-typeset .keyrule {
+  margin: 1.6rem 0;
+  padding: 0.9rem 1.2rem;
+  border: 1px solid var(--c-accent);
+  border-left-width: 4px;
+  border-radius: 0.2rem;
+  background-color: rgb(var(--c-accent-rgb) / 0.08);
+  box-shadow: 0 0 18px rgb(var(--c-accent-rgb) / 0.2);
+  color: var(--c-text);
+  font-family: var(--heading-font);
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 8px rgb(var(--c-accent-rgb) / 0.45);
+}
+
+/* Слово с постоянным глитчем:
+     <span class="glitch" data-text="слово">слово</span>
+   Само слово — цвета опасности и слегка подрагивает; две копии (экранный
+   циан и ультрафиолет) расходятся и выхватывают срезы букв. data-text
+   должен совпадать с текстом внутри */
+.md-typeset .glitch {
+  position: relative;
+  display: inline-block;
+  color: var(--c-danger);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgb(var(--c-danger-rgb) / 0.55);
+  animation: word-jitter 2.4s steps(1, end) infinite;
+}
+.md-typeset .glitch::before,
+.md-typeset .glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  clip-path: inset(0 0 100% 0);
+  text-shadow: none;
+}
+.md-typeset .glitch::before {
+  color: var(--c-accent);
+  animation: word-slice-a 1.9s steps(1, end) infinite;
+}
+.md-typeset .glitch::after {
+  color: var(--c-accent-2);
+  animation: word-slice-b 2.3s steps(1, end) infinite;
+}
+@keyframes word-jitter {
+  0%, 18%, 22%, 60%, 63%, 100% { transform: none; }
+  19%   { transform: translateX(-1px) skewX(-4deg); }
+  21%   { transform: translateX(1px); }
+  61%   { transform: translateX(1px) skewX(3deg); }
+}
+@keyframes word-slice-a {
+  0%, 12%, 30%, 52%, 70%, 100% { clip-path: inset(0 0 100% 0); transform: none; }
+  13%  { clip-path: inset(10% 0 55% 0); transform: translateX(-3px); }
+  20%  { clip-path: inset(55% 0 12% 0); transform: translateX(2px); }
+  53%  { clip-path: inset(30% 0 40% 0); transform: translateX(-2px); }
+  58%  { clip-path: inset(0 0 70% 0);   transform: translateX(3px); }
+}
+@keyframes word-slice-b {
+  0%, 8%, 35%, 48%, 80%, 100% { clip-path: inset(0 0 100% 0); transform: none; }
+  9%   { clip-path: inset(45% 0 20% 0); transform: translateX(3px); }
+  15%  { clip-path: inset(5% 0 70% 0);  transform: translateX(-2px); }
+  49%  { clip-path: inset(60% 0 5% 0);  transform: translateX(2px); }
+  55%  { clip-path: inset(20% 0 45% 0); transform: translateX(-3px); }
+}
+/* Без движения — застывший разлёт цветов, чтобы слово осталось выделенным */
+@media (prefers-reduced-motion: reduce) {
+  .md-typeset .glitch,
+  .md-typeset .glitch::before,
+  .md-typeset .glitch::after {
+    animation: none;
+  }
+  .md-typeset .glitch {
+    text-shadow:
+      -1px 0 rgb(var(--c-accent-rgb) / 0.7),
+      1px 0 rgb(var(--c-accent-2-rgb) / 0.7);
+  }
 }
