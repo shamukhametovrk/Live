@@ -13,7 +13,9 @@ RUN uv sync --locked --no-dev
 COPY engine engine
 COPY web web
 
+# Render задаёт порт в PORT; без него — 8080.
+ENV PORT=8080
 EXPOSE 8080
-CMD ["/app/.venv/bin/uvicorn", "engine.adapters.websocket:create_app", \
-     "--factory", "--host", "0.0.0.0", "--port", "8080", \
-     "--proxy-headers", "--forwarded-allow-ips", "*"]
+CMD exec /app/.venv/bin/uvicorn engine.adapters.websocket:create_app \
+    --factory --host 0.0.0.0 --port "$PORT" \
+    --proxy-headers --forwarded-allow-ips "*"
