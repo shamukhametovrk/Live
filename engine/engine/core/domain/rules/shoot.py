@@ -11,7 +11,6 @@ from ..errors import IllegalAction
 from ..events import ChipEarned, EffectRemoved, Event, Shot
 from ..ids import PlayerID
 from ..state import (
-    Chamber,
     Double,
     Effect,
     FullForce,
@@ -21,6 +20,7 @@ from ..state import (
     Shooting,
     TryThis,
 )
+from .chambers import use_chamber
 from .effects import find, in_force, without
 
 
@@ -69,11 +69,7 @@ def shoot(
 
     loaded = spread.chambers[cmd.chamber].loaded
     chambers = list(spread.chambers)
-    chambers[cmd.chamber] = Chamber(loaded, used=True)
-    for player in round_.seats:
-        named = find(seats[player], TryThis)
-        if named and named.chamber == cmd.chamber:
-            take(player, named)
+    removed += use_chamber(seats, chambers, cmd.chamber)
 
     damage = 0
     earned = False
