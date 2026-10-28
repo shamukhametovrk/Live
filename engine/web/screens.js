@@ -1,11 +1,11 @@
-// Экраны: отрисовка по снимку и ввод игрока. Интерфейс пока простой.
+// Экраны: отрисовка по снимку и ввод игрока (см. «Дизайн» в docs/engine/web-client.md).
 
 const ui = {
   view: null,
   chamber: null,    // выбранная камора
-  target: null,     // выбранная цель
   pending: null,    // предмет, которому собираем поля: {item, fields, cmd}
   prep: null,       // начало ряда: {key, keep: [bool], chips: [int]}
+  announced: null,  // число патронов, пока оно горит: {n, at}
 };
 
 const $ = (id) => document.getElementById(id);
@@ -15,6 +15,7 @@ function el(tag, attrs = {}, ...children) {
   for (const [k, v] of Object.entries(attrs)) {
     if (k === "onclick") node.onclick = v;
     else if (k === "class") node.className = v;
+    else if (k === "style") node.style.cssText = v;
     else if (v !== false && v !== null && v !== undefined) node.setAttribute(k, v);
   }
   for (const child of children.flat()) {
@@ -25,18 +26,11 @@ function el(tag, attrs = {}, ...children) {
   return node;
 }
 
-function line(text, kind) {
-  const feed = $("feed");
-  const cls = kind === "rejected" ? "bad" : kind === "shot" ? "hot" : "";
-  feed.append(el("p", { class: cls }, `> ${text}`));
-  feed.scrollTop = feed.scrollHeight;
-}
-
 function render(view) {
   ui.view = view;
   const table = $("table");
   table.hidden = false;
-  table.replaceChildren(screenFor(view));
+  table.replaceChildren(screenFor(view), layer);
   const away = view && view.presence
     ? Object.entries(view.presence).filter(([, s]) => s === "away").map(([p]) => p)
     : [];
@@ -47,8 +41,8 @@ function render(view) {
 function screenFor(view) {
   if (view === null) {
     return Net.me === null
-      ? el("div", {}, el("p", {}, "Стол пуст или игра уже идёт."), sitButton())
-      : el("p", {}, "Ждём…");
+      ? el("div", { class: "screen-card" }, el("p", {}, "Стол пуст или игра уже идёт."), sitButton())
+      : el("p", { class: "dim" }, "Ждём…");
   }
   switch (view.type) {
     case "lobby": return lobby(view);
@@ -90,140 +84,166 @@ function lobby(view) {
     parts.push(el("div", { class: "actions" },
       el("button", { onclick: () => Net.send({ type: "leave" }) }, "Уйти")));
   }
-  return el("div", {}, parts);
+  return el("div", { class: "screen-card" }, parts);
 }
 
-// Игра
+// Стол
+
+// Где сидит игрок: доля от размера стола. Вы — внизу, дальше по кругу хода.
+function seatSpot(round, player, radius) {
+  const circle = round.circle;
+  const me = circle.includes(Net.me) ? Net.me : circle[0];
+  const i = (circle.indexOf(player) - circle.indexOf(me) + circle.length) % circle.length;
+  const angle = Math.PI / 2 + (2 * Math.PI * i) / circle.length;
+  return { x: 50 + radius * Math.cos(angle), y: 50 + radius * Math.sin(angle) };
+}
+
+function at(spot) {
+  return `left:${spot.x}%;top:${spot.y}%`;
+}
 
 function game(view) {
   const round = view.round;
-  if (!round || !round.spread) return el("p", {}, "…");
-  const seats = round.seats;
-  const header = el("p", { class: "dim" },
-    `раунд ${view.results.length + 1} из ${view.settings.rounds} · ход ${round.turn}`,
-    ` · ходит ${round.active === Net.me ? "ВЫ" : round.active}`);
-  const body = round.spread.type === "preparing_view"
-    ? preparing(round, round.spread)
-    : shooting(round, round.spread);
-  return el("div", {}, header, players(round), body);
-}
-
-function players(round) {
-  return el("div", { class: "players" }, round.circle.map((p) => {
-    const s = round.seats[p];
-    const alive = s.health > 0;
-    const cls = ["player", p === round.active ? "active" : "",
-      p === ui.target ? "target" : "", alive ? "" : "dead"].join(" ");
-    const name = p === Net.me ? `${p} (вы)` : `${p}`;
-    const hp = alive ? "♥".repeat(s.health) : "✝";
-    const effects = s.effects.map((e) => `[${effectText(e)}]`).join(" ");
-    const hand = s.hand.length ? ` · ${s.hand.map((i) => ITEMS[i]).join(", ")}` : "";
-    return el("div", { class: cls, onclick: alive ? () => pickPlayer(p) : null },
-      el("span", { class: "name" }, name), " ",
-      el("span", { class: "hp" }, hp), " ",
-      el("span", { class: "chips" }, `◆${s.chips}`), " ",
-      el("span", { class: "effects" }, effects),
-      el("span", { class: "dim" }, hand));
-  }));
-}
-
-// Начало ряда
-
-function preparing(round, spread) {
-  const me = Net.me;
-  const seat = round.seats[me];
-  const waiting = round.circle.filter((p) => round.seats[p].health > 0 && !spread.decided.includes(p));
-  const note = el("p", { class: "dim" }, `ряд: ${spread.size} камор · ещё решают: ${waiting.join(", ") || "никто"}`);
-  if (!seat || seat.health <= 0 || spread.decided.includes(me)) {
-    return el("div", {}, note, el("p", {}, "Ждём остальных…"));
-  }
-  const pool = [...seat.hand, ...spread.offer];
-  const key = JSON.stringify([round.turn, spread.size, pool]);
-  if (!ui.prep || ui.prep.key !== key) {
-    ui.prep = { key, keep: pool.map((_, i) => i < 8), chips: Array(spread.size).fill(0) };
-  }
-  const prep = ui.prep;
-  const kept = prep.keep.filter(Boolean).length;
-  const items = pool.map((item, i) => el("button", {
-    class: prep.keep[i] ? "on" : "",
-    onclick: () => { prep.keep[i] = !prep.keep[i]; render(ui.view); },
-  }, ITEMS[item], i >= seat.hand.length ? " (новый)" : ""));
-  const left = seat.chips - prep.chips.reduce((a, b) => a + b, 0);
-  const chambers = prep.chips.map((n, i) => el("div", { class: "chamber" },
-    `${i + 1}`, el("small", {}, `фишек ${n}`),
-    el("button", { disabled: left <= 0, onclick: () => { prep.chips[i]++; render(ui.view); } }, "+"),
-    el("button", { disabled: n <= 0, onclick: () => { prep.chips[i]--; render(ui.view); } }, "−")));
-  return el("div", {}, note,
-    el("p", {}, `Что оставить в руке (${kept} из 8):`), el("div", { class: "hand" }, items),
-    seat.chips ? el("p", {}, `Фишки: осталось разложить ${left}`) : null,
-    seat.chips ? el("div", { class: "row" }, chambers) : null,
-    el("div", { class: "actions" }, el("button", {
-      disabled: kept > 8 || left !== 0,
-      onclick: () => Net.send({
-        type: "prepare",
-        hand: pool.filter((_, i) => prep.keep[i]),
-        chips: prep.chips,
-      }),
-    }, "Готово")));
-}
-
-// Стрельба
-
-function shooting(round, spread) {
-  const mine = round.active === Net.me;
-  const row = el("div", { class: "row" }, spread.chambers.map((c, i) => {
-    const mark = c.used ? (c.loaded ? "●" : "○") : "?";
-    const weight = spread.seen[i] !== undefined ? `вес ${spread.seen[i]}` : "";
-    return el("button", {
-      class: `chamber ${ui.chamber === i ? "picked" : ""}`,
-      disabled: c.used,
-      onclick: () => pickChamber(i),
-    }, mark, el("small", {}, `${i + 1} ${weight}`));
-  }));
+  if (!round || !round.spread) return el("p", { class: "dim" }, "…");
+  const spread = round.spread;
   const seat = round.seats[Net.me];
-  const hand = seat ? seat.hand.map((item) => el("button", {
-    disabled: !mine,
-    onclick: () => useItem(item),
-  }, ITEMS[item])) : [];
-  const actions = [];
-  if (mine) {
-    actions.push(el("button", {
-      disabled: ui.chamber === null || ui.target === null,
-      onclick: shoot,
-    }, "Выстрел"));
+  const parts = [
+    el("div", { class: "felt" }),
+    el("div", { class: "round-mark" },
+      `раунд ${view.results.length + 1}/${view.settings.rounds}`),
+    row(round, spread),
+    ...round.circle.filter((p) => p !== Net.me).map((p) => otherHand(round, p)),
+    ...round.circle.map((p) => player(round, p)),
+  ];
+  if (ui.pending) parts.push(pendingPanel());
+  const board = el("div", { class: "board" }, parts);
+  const screen = [board];
+  if (seat) screen.push(myHand(round, seat));
+  if (spread.type === "preparing_view") {
+    screen.push(preparing(round, spread));
   }
-  if (ui.pending) {
-    actions.push(el("span", { class: "hot" }, pendingHint()));
-    if (ui.pending.fields[0] === "take") {
-      actions.push(el("button", { onclick: () => fill("take", "item") }, "забрать предмет"));
-      actions.push(el("button", { onclick: () => fill("take", "chip") }, "забрать фишку"));
-    }
-    actions.push(el("button", { onclick: () => { ui.pending = null; render(ui.view); } }, "отмена"));
-  }
-  return el("div", {}, row,
-    el("p", { class: "row-note" }, `патронов объявлено: ${spread.announced}`,
-      spread.chips && spread.chips.some(Boolean)
-        ? ` · ваши фишки по каморам: ${spread.chips.join(" ")}` : ""),
-    seat ? el("div", { class: "hand" }, "Рука: ", hand.length ? hand : el("span", { class: "dim" }, "пусто"),
-      el("span", { class: "dim" }, ` · фишек ${seat.chips}`)) : null,
-    el("div", { class: "actions" }, actions),
-    mine && !ui.pending ? el("p", { class: "dim" }, "Выберите камору и цель (клик по игроку), затем «Выстрел».") : null);
+  return el("div", { class: "game" }, screen);
 }
+
+function row(round, spread) {
+  const shooting = spread.type === "shooting_view";
+  const mine = shooting && round.active === Net.me;
+  const chambers = shooting
+    ? spread.chambers
+    : Array.from({ length: spread.size }, () => ({ used: false, loaded: null }));
+  const cells = chambers.map((c, i) => {
+    const cls = ["chamber",
+      c.used ? (c.loaded ? "loaded" : "blank") : "",
+      ui.chamber === i ? "picked" : "",
+      mine && !c.used ? "live" : ""].join(" ");
+    const weight = shooting && spread.seen[i] !== undefined
+      ? el("span", { class: "weight" }, spread.seen[i]) : null;
+    const chips = shooting && spread.chips && spread.chips[i]
+      ? el("span", { class: "chips-on" }, chipStack(spread.chips[i])) : null;
+    return el("div", {
+      class: cls,
+      onclick: shooting && !c.used ? () => pickChamber(i) : null,
+    }, el("span", { class: "core" }), weight, chips);
+  });
+  // Перерисовка не должна перезапускать вспышку: продолжаем с того же места.
+  const announced = ui.announced !== null
+    ? el("div", {
+      class: "announced",
+      style: `animation-delay:-${Date.now() - ui.announced.at}ms`,
+    }, ui.announced.n) : null;
+  return el("div", { class: "row" }, cells, announced);
+}
+
+function player(round, p) {
+  const s = round.seats[p];
+  const alive = s.health > 0;
+  const field = ui.pending && ui.pending.fields[0];
+  const aiming = (round.active === Net.me && ui.chamber !== null && !ui.pending)
+    || field === "player" || field === "target";
+  const cls = ["seat",
+    p === round.active ? "active" : "",
+    p === Net.me ? "me" : "",
+    alive ? "" : "dead",
+    aiming && alive ? "aim" : ""].join(" ");
+  const lives = Array.from({ length: Math.max(round.start_health, s.health) },
+    (_, i) => el("span", { class: i < s.health ? "life" : "life lost" }));
+  return el("div", {
+    class: cls,
+    style: at(seatSpot(round, p, 44)),
+    "data-player": p,
+    onclick: alive ? () => pickPlayer(p) : null,
+  },
+  el("div", { class: "plate" }, p === Net.me ? "вы" : p),
+  el("div", { class: "lives" }, lives),
+  s.chips ? el("div", { class: "chips" }, chipStack(s.chips)) : null,
+  s.effects.length
+    ? el("div", { class: "effects" }, s.effects.map((e) =>
+      el("span", { class: "effect", title: effectText(e) }, effectMark(e))))
+    : null);
+}
+
+function otherHand(round, p) {
+  const hand = round.seats[p].hand;
+  if (!hand.length) return null;
+  const spot = seatSpot(round, p, 30);
+  // Сбоку рука легла бы на ряд камор — сдвигаем её ниже ряда.
+  if (Math.abs(spot.y - 50) < 12) spot.y = 63;
+  return el("div", { class: "hand-small", style: at(spot) },
+    hand.map((item) => itemTile(item)));
+}
+
+function myHand(round, seat) {
+  const mine = round.active === Net.me && round.spread.type === "shooting_view";
+  const tiles = seat.hand.map((item) => itemTile(item, mine ? () => useItem(item) : null,
+    ui.pending && ui.pending.item === item));
+  return el("div", { class: "my-hand" },
+    tiles.length ? tiles : el("span", { class: "dim" }, "рука пуста"));
+}
+
+function itemTile(item, onclick, active) {
+  return el("span", {
+    class: `item${onclick ? " usable" : ""}${active ? " active" : ""}`,
+    title: ITEMS[item] || item,
+    onclick,
+  }, initials(ITEMS[item] || item));
+}
+
+// Пока нет значков — первые буквы названия.
+function initials(name) {
+  return name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function effectMark(e) {
+  return initials(effectText(e));
+}
+
+function chipStack(n) {
+  return Array.from({ length: n }, () => el("span", { class: "chip" }));
+}
+
+// Ввод
 
 function pickChamber(i) {
   if (ui.pending && ui.pending.fields[0] === "chamber") return fill("chamber", i);
-  ui.chamber = i;
+  if (ui.view.round.active !== Net.me) return;
+  ui.chamber = ui.chamber === i ? null : i;
   render(ui.view);
 }
 
 function pickPlayer(p) {
   const field = ui.pending && ui.pending.fields[0];
   if (field === "player" || field === "target") return fill(field, p);
-  ui.target = p;
-  render(ui.view);
+  const round = ui.view.round;
+  if (ui.pending || ui.chamber === null || round.active !== Net.me) return;
+  Net.send({ type: "shoot", chamber: ui.chamber, target: p });
+  ui.chamber = null;
 }
 
 function useItem(item) {
+  if (ui.pending && ui.pending.item === item) {
+    ui.pending = null;
+    return render(ui.view);
+  }
   const fields = ITEM_FIELDS[item] || [];
   ui.pending = { item, fields: [...fields], cmd: { type: "use_item", item } };
   if (fields.length === 0) return sendPending();
@@ -243,19 +263,115 @@ function sendPending() {
   render(ui.view);
 }
 
-function pendingHint() {
+function pendingPanel() {
   const asks = {
-    chamber: "выберите камору",
-    player: "выберите игрока",
-    target: "выберите цель",
+    chamber: "камора?",
+    player: "игрок?",
+    target: "цель?",
     take: "что забрать?",
   };
-  return `${ITEMS[ui.pending.item]}: ${asks[ui.pending.fields[0]]}`;
+  const field = ui.pending.fields[0];
+  return el("div", { class: "pending" },
+    el("div", {}, `${ITEMS[ui.pending.item]}: ${asks[field]}`),
+    field === "take" ? el("div", { class: "actions" },
+      el("button", { onclick: () => fill("take", "item") }, "предмет"),
+      el("button", { onclick: () => fill("take", "chip") }, "фишку")) : null);
 }
 
-function shoot() {
-  Net.send({ type: "shoot", chamber: ui.chamber, target: ui.target });
-  ui.chamber = null;
+// Начало ряда — окно поверх стола
+
+function preparing(round, spread) {
+  const me = Net.me;
+  const seat = round.seats[me];
+  const waiting = round.circle.filter((p) => round.seats[p].health > 0 && !spread.decided.includes(p));
+  if (!seat || seat.health <= 0 || spread.decided.includes(me)) {
+    return el("div", { class: "modal quiet" }, `ждём: ${waiting.join(", ")}`);
+  }
+  const pool = [...seat.hand, ...spread.offer];
+  const key = JSON.stringify([round.turn, spread.size, pool]);
+  if (!ui.prep || ui.prep.key !== key) {
+    ui.prep = { key, keep: pool.map((_, i) => i < 8), chips: Array(spread.size).fill(0) };
+  }
+  const prep = ui.prep;
+  const kept = prep.keep.filter(Boolean).length;
+  const items = pool.map((item, i) => el("button", {
+    class: prep.keep[i] ? "on" : "",
+    onclick: () => { prep.keep[i] = !prep.keep[i]; render(ui.view); },
+  }, ITEMS[item], i >= seat.hand.length ? " ★" : ""));
+  const left = seat.chips - prep.chips.reduce((a, b) => a + b, 0);
+  const chambers = prep.chips.map((n, i) => el("div", { class: "prep-chamber" },
+    el("span", {}, i + 1),
+    el("span", { class: "chips" }, chipStack(n)),
+    el("button", { disabled: left <= 0, onclick: () => { prep.chips[i]++; render(ui.view); } }, "+"),
+    el("button", { disabled: n <= 0, onclick: () => { prep.chips[i]--; render(ui.view); } }, "−")));
+  return el("div", { class: "modal" },
+    el("p", {}, `Рука: ${kept} из 8`), el("div", { class: "hand" }, items),
+    seat.chips ? el("p", {}, "Фишки на каморы: ", chipStack(left)) : null,
+    seat.chips ? el("div", { class: "prep-row" }, chambers) : null,
+    el("div", { class: "actions" }, el("button", {
+      disabled: kept > 8 || left !== 0,
+      onclick: () => Net.send({
+        type: "prepare",
+        hand: pool.filter((_, i) => prep.keep[i]),
+        chips: prep.chips,
+      }),
+    }, "Готово")));
+}
+
+// Подписи: сообщения движка всплывают у игрока, к которому относятся
+
+const QUIET = new Set(["prepared", "turn_passed", "effect_removed", "joined",
+  "left", "settings_changed", "reconnected", "game_started", "spread_started"]);
+
+function onMessage(m) {
+  if (m.type === "loaded") {
+    ui.announced = { n: m.announced, at: Date.now() };
+    setTimeout(() => { ui.announced = null; if (ui.view) render(ui.view); }, 2500);
+    return;
+  }
+  if (QUIET.has(m.type)) return;
+  bubble(caption(m), m.type === "shot" && m.loaded && m.damage ? "hit" : "",
+    m.target ?? m.player ?? m.owner ?? m.actor ?? m.shooter ?? null);
+}
+
+function caption(m) {
+  switch (m.type) {
+    case "shot": return !m.loaded ? "щёлк" : m.damage === 0 ? "щит" : `−${m.damage}`;
+    case "died": return "✝";
+    case "chip_earned": return "+◆";
+    case "effect_added": return effectText(m.effect);
+    default: return describe(m);
+  }
+}
+
+function onRejected(code) {
+  bubble(REJECTIONS[code] || code, "bad", null);
+}
+
+// Слой подписей живёт поверх стола и переживает перерисовку.
+const layer = el("div", { class: "bubbles" });
+
+function bubble(text, kind, playerId) {
+  const table = $("table");
+  const seat = playerId === null ? null
+    : table.querySelector(`.seat[data-player="${playerId}"]`);
+  const box = table.getBoundingClientRect();
+  let x = box.width / 2, y = Math.min(box.width, box.height) * 0.38;
+  if (seat) {
+    const r = seat.getBoundingClientRect();
+    x = r.left + r.width / 2 - box.left;
+    y = r.top - box.top;
+  }
+  // Подписи у одного места встают столбиком, а не друг на друга.
+  const key = String(playerId);
+  const stacked = [...layer.children].filter((b) => b.dataset.key === key).length;
+  const node = el("div", {
+    class: `bubble ${kind}`,
+    "data-key": key,
+    style: `left:${x}px;top:${y - stacked * 30}px`,
+  }, text);
+  layer.append(node);
+  setTimeout(() => node.remove(), 2600);
 }
 
 // Конец игры
@@ -267,7 +383,8 @@ function finished(view) {
     `игрок ${p}: побед ${wins[p] || 0}`,
     view.presence[p] === "withdrawn" ? " (выбыл)" : "",
     p === Net.me ? " — вы" : ""));
-  return el("div", {}, el("p", {}, "Игра окончена. Скоро стол опустеет."),
+  return el("div", { class: "screen-card" },
+    el("p", {}, "Игра окончена. Скоро стол опустеет."),
     el("ul", {}, rows),
     el("div", { class: "actions" },
       el("button", { onclick: () => Net.send({ type: "history" }) }, "История")));
@@ -276,14 +393,16 @@ function finished(view) {
 // Запуск
 
 Net.onSnapshot = render;
-Net.onLine = line;
+Net.onMessage = onMessage;
+Net.onRejected = onRejected;
 
 // Страницу отдаёт сам движок — подключаемся к тому же адресу.
 Net.connect(location.host || "localhost:8000");
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && ui.view && ui.view.type === "game_view"
-      && ui.chamber !== null && ui.target !== null && !ui.pending) {
-    shoot();
+  if (e.key === "Escape" && (ui.pending || ui.chamber !== null)) {
+    ui.pending = null;
+    ui.chamber = null;
+    if (ui.view) render(ui.view);
   }
 });

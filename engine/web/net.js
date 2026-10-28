@@ -9,7 +9,8 @@ const Net = {
   dirty: false,     // после запроса пришли новые сообщения
   greeting: false,  // ждём снимок, который движок шлёт при подключении
   onSnapshot: () => {},
-  onLine: () => {},
+  onMessage: () => {},
+  onRejected: () => {},
 
   connect(server) {
     this.server = server;
@@ -56,12 +57,12 @@ const Net = {
         }));
         break;
       case "message":
-        this.onLine(describe(data.message), data.message.type);
+        this.onMessage(data.message);
         this.dirty = true;
         if (!this.waiting) this.askSnapshot();
         break;
       case "rejected":
-        this.onLine(REJECTIONS[data.code] || data.code, "rejected");
+        this.onRejected(data.code);
         if (data.code === "bad_token") this.forget();
         break;
       case "snapshot":
@@ -73,8 +74,7 @@ const Net = {
         this.onSnapshot(data.view);
         break;
       case "history":
-        this.onLine(`история: ${data.events.length} событий (в консоли браузера)`);
-        console.log(data.events);
+        console.log("история", data.events);
         break;
     }
   },

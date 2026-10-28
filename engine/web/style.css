@@ -180,103 +180,17 @@ input:focus, select:focus { outline: none; border-color: var(--c-accent); }
 .hot { color: var(--c-accent-2); }
 .bad { color: var(--c-danger); }
 
+
 /* ================================================================
-   Игроки: столы под лампой
+   Экраны вне стола: лобби, конец игры
    ================================================================ */
-.players {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-.player {
-  cursor: pointer;
-  padding: 8px 12px;
+.screen-card {
+  max-width: 480px;
+  margin: 40px auto;
+  padding: 20px 24px;
   border: 1px solid var(--c-border);
-  border-radius: 3px;
+  border-radius: 6px;
   background: rgb(10 28 28 / 0.7);
-  transition: border-color 0.25s, box-shadow 0.25s;
-}
-.player:hover:not(.dead) {
-  border-color: var(--c-accent-2);
-  box-shadow: 0 0 16px rgb(var(--c-accent-2-rgb) / 0.2);
-}
-.player.active {
-  border-color: var(--c-accent);
-  box-shadow: 0 0 16px rgb(var(--c-accent-rgb) / 0.3);
-}
-.player.active::before {
-  content: "▸ ";
-  color: var(--c-accent);
-}
-.player.target {
-  border-color: var(--c-danger);
-  box-shadow: 0 0 16px rgb(var(--c-danger-rgb) / 0.35);
-}
-.player.dead {
-  opacity: 0.45;
-  cursor: default;
-}
-.player .name {
-  font-family: var(--heading-font);
-  font-size: 13px;
-  letter-spacing: 0.04em;
-}
-.player .hp {
-  color: var(--c-danger);
-  text-shadow: 0 0 6px rgb(var(--c-danger-rgb) / 0.6);
-}
-.player .chips {
-  color: var(--c-chip);
-  text-shadow: 0 0 6px rgb(var(--c-chip-rgb) / 0.5);
-}
-.player .effects { color: var(--c-accent-2); }
-
-/* ================================================================
-   Ряд камор
-   ================================================================ */
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin: 24px 0 8px;
-}
-.chamber {
-  width: 60px;
-  padding: 10px 0;
-  text-align: center;
-  font-size: 22px;
-  border: 1px solid var(--c-border);
-  border-radius: 50% 50% 6px 6px;
-  background: radial-gradient(circle at 50% 30%, var(--c-surface-2), var(--c-bg));
-}
-button.chamber { color: var(--c-text); }
-button.chamber:hover:not(:disabled) {
-  background: radial-gradient(circle at 50% 30%, var(--c-surface-2), var(--c-bg));
-  color: var(--c-accent);
-  border-color: var(--c-accent);
-}
-.chamber small {
-  display: block;
-  font: 11px var(--mono-font);
-  color: var(--c-text-2);
-  text-transform: none;
-}
-.chamber.picked,
-button.chamber.picked:hover {
-  color: var(--c-danger);
-  border-color: var(--c-danger);
-  box-shadow: 0 0 16px rgb(var(--c-danger-rgb) / 0.45);
-}
-.row-note { text-align: center; color: var(--c-text-2); }
-
-.hand {
-  margin-top: 24px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
 }
 .actions {
   margin-top: 16px;
@@ -285,30 +199,309 @@ button.chamber.picked:hover {
   flex-wrap: wrap;
   align-items: center;
 }
+.hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
 /* ================================================================
-   Лента: терминал
+   Стол: вид сверху. Размеры — в долях ширины стола (cqw)
    ================================================================ */
-#feed {
-  margin-top: 24px;
-  padding: 8px 12px;
-  height: 180px;
-  overflow-y: auto;
-  font: 13px/1.6 var(--mono-font);
+#table { position: relative; }
+
+.game { display: flex; flex-direction: column; align-items: center; }
+
+.board {
+  position: relative;
+  width: min(100%, calc(100vh - 190px));
+  min-width: 300px;
+  aspect-ratio: 1;
+  container-type: inline-size;
+  user-select: none;
+}
+
+/* Сукно: бархат под лампой, хромированный обод */
+.felt {
+  position: absolute;
+  inset: 9%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, rgb(27 59 60 / 0.9), var(--c-surface) 60%, var(--c-bg) 100%);
+  border: 0.6cqw solid var(--c-border);
+  box-shadow:
+    0 0 0 0.3cqw rgb(var(--c-accent-rgb) / 0.25),
+    0 0 6cqw rgb(var(--c-accent-rgb) / 0.12),
+    inset 0 0 8cqw rgb(0 0 0 / 0.6);
+}
+
+.round-mark {
+  position: absolute;
+  top: 1%;
+  left: 1%;
+  font: 2cqw var(--mono-font);
+  color: var(--c-text-3);
+  letter-spacing: 0.1em;
+}
+
+/* Ряд камор — линией через центр */
+.row {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 0.8cqw;
+}
+.chamber {
+  position: relative;
+  width: 5cqw;
+  height: 8cqw;
+  border-radius: 2.5cqw;
+  border: 0.25cqw solid var(--c-border);
+  background: radial-gradient(circle at 50% 35%, var(--c-surface-2), var(--c-bg));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.chamber .core {
+  width: 2.4cqw;
+  height: 2.4cqw;
+  border-radius: 50%;
+  border: 0.25cqw solid var(--c-text-3);
+}
+.chamber.live { cursor: pointer; }
+.chamber.live:hover {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 2cqw rgb(var(--c-accent-rgb) / 0.4);
+}
+.chamber.picked {
+  border-color: var(--c-danger);
+  box-shadow: 0 0 2.5cqw rgb(var(--c-danger-rgb) / 0.6);
+  transform: translateY(-1cqw);
+}
+.chamber.blank { opacity: 0.4; }
+.chamber.blank .core { border-style: dashed; }
+.chamber.loaded { opacity: 0.6; }
+.chamber.loaded .core {
+  background: var(--c-danger);
+  border-color: var(--c-danger);
+  box-shadow: 0 0 1.5cqw var(--c-danger);
+}
+.chamber .weight {
+  position: absolute;
+  top: -3cqw;
+  font: 1.8cqw var(--mono-font);
+  color: var(--c-accent-2);
+  text-shadow: 0 0 1cqw rgb(var(--c-accent-2-rgb) / 0.8);
+}
+.chamber .chips-on {
+  position: absolute;
+  bottom: -2.6cqw;
+  display: flex;
+}
+
+/* Число патронов: вспыхивает над рядом и гаснет */
+.announced {
+  position: absolute;
+  left: 50%;
+  top: -11cqw;
+  transform: translateX(-50%);
+  font: 700 8cqw var(--heading-font);
+  color: var(--c-danger);
+  text-shadow: 0 0 3cqw rgb(var(--c-danger-rgb) / 0.8);
+  animation: flash-out 2.5s ease-out forwards;
+}
+
+/* Игрок у края стола */
+.seat {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 11cqw;
+  padding: 0.8cqw 1.2cqw;
+  border: 0.25cqw solid var(--c-border);
+  border-radius: 1.2cqw;
+  background: rgb(5 15 15 / 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6cqw;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.seat .plate {
+  font: 700 2cqw var(--heading-font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.seat.me .plate { color: var(--c-accent); }
+.seat.active {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 3cqw rgb(var(--c-accent-rgb) / 0.45);
+}
+.seat.aim { cursor: crosshair; }
+.seat.aim:hover {
+  border-color: var(--c-danger);
+  box-shadow: 0 0 3cqw rgb(var(--c-danger-rgb) / 0.5);
+}
+.seat.dead { opacity: 0.35; filter: grayscale(1); }
+
+.lives, .chips, .effects { display: flex; gap: 0.5cqw; }
+.life {
+  width: 1.3cqw;
+  height: 1.3cqw;
+  border-radius: 50%;
+  background: var(--c-danger);
+  box-shadow: 0 0 1cqw var(--c-danger);
+}
+.life.lost {
+  background: transparent;
+  border: 0.2cqw solid var(--c-text-3);
+  box-shadow: none;
+}
+
+/* Фишка — янтарный кружок; в стопке наползают друг на друга */
+.chip {
+  display: inline-block;
+  width: 1.6cqw;
+  height: 1.6cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--c-chip) 35%, rgb(var(--c-chip-rgb) / 0.6) 40%, var(--c-chip) 45%);
+  border: 0.15cqw solid rgb(0 0 0 / 0.5);
+  box-shadow: 0 0 0.8cqw rgb(var(--c-chip-rgb) / 0.5);
+}
+.chips .chip + .chip,
+.chips-on .chip + .chip { margin-left: -0.9cqw; }
+
+.effect {
+  font: 1.5cqw var(--mono-font);
+  color: var(--c-accent-2);
+  border: 0.2cqw solid var(--c-accent-2);
+  border-radius: 0.6cqw;
+  padding: 0 0.5cqw;
+  box-shadow: 0 0 1cqw rgb(var(--c-accent-2-rgb) / 0.5);
+}
+
+/* Предметы: рука на столе перед игроком */
+.item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--c-text-3);
+  border-radius: 4px;
+  background: var(--c-surface);
+  font-family: var(--heading-font);
   color: var(--c-text-2);
-  background: rgb(5 15 15 / 0.7);
+}
+.hand-small {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5cqw;
+  max-width: 16cqw;
+}
+.hand-small .item {
+  width: 3.4cqw;
+  height: 3.4cqw;
+  font-size: 1.3cqw;
+  border-radius: 0.6cqw;
+}
+.my-hand {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  min-height: 56px;
+}
+.my-hand .item {
+  width: 52px;
+  height: 52px;
+  font-size: 14px;
+}
+.item.usable { cursor: pointer; border-color: var(--c-accent); color: var(--c-accent); }
+.item.usable:hover,
+.item.active {
+  background: var(--c-accent);
+  color: var(--c-bg);
+  box-shadow: 0 0 16px rgb(var(--c-accent-rgb) / 0.5);
+}
+
+/* Предмет ждёт поля: подсказка в центре стола */
+.pending {
+  position: absolute;
+  top: 62%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font: 2cqw var(--heading-font);
+  color: var(--c-accent-2);
+  text-shadow: 0 0 1cqw rgb(var(--c-accent-2-rgb) / 0.7);
+}
+
+/* Начало ряда — окно поверх стола */
+.modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  width: min(92%, 560px);
+  padding: 20px 24px;
+  border: 1px solid var(--c-accent);
+  border-radius: 6px;
+  background: rgb(5 15 15 / 0.94);
+  box-shadow: 0 0 40px rgb(var(--c-accent-rgb) / 0.25);
+}
+.modal.quiet {
+  width: auto;
+  padding: 10px 16px;
+  border-color: var(--c-border);
+  color: var(--c-text-2);
+  font: 13px var(--mono-font);
+  box-shadow: none;
+}
+.prep-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.prep-chamber {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
   border: 1px solid var(--c-border);
-  border-left: 2px solid var(--c-accent);
-  box-shadow: inset 0 0 20px rgb(var(--c-accent-rgb) / 0.05);
+  border-radius: 4px;
 }
-#feed p { margin: 0; }
-#feed p:last-child { color: var(--c-text); }
-#feed p.hot { color: var(--c-danger); }
-#feed p:last-child::after {
-  content: "_";
-  color: var(--c-accent);
-  animation: blink 1s steps(1) infinite;
+.prep-chamber button { padding: 0 8px; }
+.modal .chip { width: 12px; height: 12px; }
+.modal .chips .chip + .chip { margin-left: -5px; }
+
+/* Подписи: всплывают у игрока и тают */
+.bubbles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
 }
+.bubble {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  padding: 4px 10px;
+  white-space: nowrap;
+  border: 1px solid var(--c-accent-2);
+  border-radius: 4px;
+  background: rgb(5 15 15 / 0.92);
+  color: var(--c-text);
+  font: 13px var(--mono-font);
+  box-shadow: 0 0 14px rgb(var(--c-accent-2-rgb) / 0.35);
+  animation: bubble 2.6s ease-out forwards;
+}
+.bubble.hit {
+  border-color: var(--c-danger);
+  color: var(--c-danger);
+  font: 700 18px var(--heading-font);
+  box-shadow: 0 0 18px rgb(var(--c-danger-rgb) / 0.6);
+}
+.bubble.bad { border-color: var(--c-danger); color: var(--c-danger); }
 
 /* ================================================================
    Пауза
@@ -316,6 +509,7 @@ button.chamber.picked:hover {
 #pause {
   position: fixed;
   inset: 0;
+  z-index: 8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -329,14 +523,23 @@ button.chamber.picked:hover {
 }
 #pause[hidden] { display: none; }
 
-@keyframes blink { 50% { opacity: 0; } }
-
+@keyframes bubble {
+  0%   { opacity: 0; translate: 0 6px; }
+  10%  { opacity: 1; translate: 0 0; }
+  75%  { opacity: 1; }
+  100% { opacity: 0; translate: 0 -10px; }
+}
+@keyframes flash-out {
+  0%   { opacity: 0; scale: 1.4; }
+  12%  { opacity: 1; scale: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
 @keyframes rec-pulse {
   0%, 20%, 80%, 100% { opacity: 1; }
   50%                { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .logo::before,
-  #feed p:last-child::after { animation: none; }
+  .logo::before { animation: none; }
 }
