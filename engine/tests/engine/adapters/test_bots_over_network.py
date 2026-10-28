@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from bot import play
+from tools.net_bot import play
 
-ENGINE = Path(__file__).parents[3] / "engine"
+ENGINE = Path(__file__).parents[3]
 
 
 def free_port() -> int:

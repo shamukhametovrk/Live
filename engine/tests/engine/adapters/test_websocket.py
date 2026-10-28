@@ -76,3 +76,10 @@ def test_asyncio_timer_fires_and_cancels():
         return fired
 
     assert asyncio.run(scenario()) == ["a"]
+
+
+def test_engine_serves_the_web_client():
+    client = TestClient(create_app(Random(0)))
+    page = client.get("/")
+    assert page.status_code == 200 and "<title>Live</title>" in page.text
+    assert client.get("/net.js").status_code == 200

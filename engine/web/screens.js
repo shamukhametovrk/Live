@@ -36,7 +36,6 @@ function render(view) {
   ui.view = view;
   const table = $("table");
   table.hidden = false;
-  $("connect").hidden = true;
   table.replaceChildren(screenFor(view));
   const away = view && view.presence
     ? Object.entries(view.presence).filter(([, s]) => s === "away").map(([p]) => p)
@@ -274,16 +273,8 @@ function finished(view) {
 Net.onSnapshot = render;
 Net.onLine = line;
 
-const params = new URLSearchParams(location.search);
-if (params.get("server")) {
-  $("server").value = params.get("server");
-  Net.connect(params.get("server"));  // ссылка с адресом — подключаемся сразу
-}
-
-$("connect-form").onsubmit = (e) => {
-  e.preventDefault();
-  Net.connect($("server").value.trim());
-};
+// Страницу отдаёт сам движок — подключаемся к тому же адресу.
+Net.connect(location.host || "localhost:8000");
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && ui.view && ui.view.type === "game_view"

@@ -1,11 +1,12 @@
-"""Бот для Live: обычный клиент без экрана.
+"""Сетевой бот: обычный клиент без экрана.
 
 Подключается к движку по WebSocket, садится за стол и играет случайно.
-Говорит с движком только JSON — код движка не импортирует.
+Говорит с движком только JSON, как веб-клиент, — код домена не
+импортирует. (Бот для тестов домена — `tools.bot`, он играет напрямую.)
 
-    uv run bot.py                       # один бот к localhost:8000
-    uv run bot.py --count 2             # двое
-    uv run bot.py --count 3 --start 3   # первый бот — хост, начнёт игру
+    uv run python -m tools.net_bot                       # один бот
+    uv run python -m tools.net_bot --count 2             # двое
+    uv run python -m tools.net_bot --count 3 --start 3   # бот-хост начнёт
 """
 
 import argparse

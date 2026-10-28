@@ -1,7 +1,8 @@
 """WebSocket-адаптер на FastAPI (см. docs/engine/architecture/adapters).
 
 Реализует порты стола: отправитель — очередь на соединение и задача,
-которая пишет её в сокет; таймер — `loop.call_later`.
+которая пишет её в сокет; таймер — `loop.call_later`. Заодно отдаёт
+веб-клиент (папка `web/`) на `/`.
 
 Запуск:  uv run uvicorn engine.adapters.websocket:create_app --factory
 """
@@ -9,13 +10,17 @@
 import asyncio
 import itertools
 from collections.abc import Callable, Hashable
+from pathlib import Path
 from random import Random
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.staticfiles import StaticFiles
 
 from ..core.application.ports import ClientID, Outgoing, Rejected
 from ..core.application.table import Table
 from .json_codec import BadRequest, decode, encode
+
+WEB = Path(__file__).parents[2] / "web"
 
 
 class QueueSender:
@@ -90,6 +95,7 @@ def create_app(rng: Random | None = None) -> FastAPI:
             sender.close(client)
             writer.cancel()
 
+    app.mount("/", StaticFiles(directory=WEB, html=True), name="web")
     return app
 
 
