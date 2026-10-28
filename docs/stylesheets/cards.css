@@ -15,35 +15,6 @@
 .md-typeset .grid.cards hr {
   border-color: var(--c-border);
 }
-/* Эмблема карточки — фишка Live, в центре иконка цветом экрана */
-.md-typeset .grid.cards .chip-emblem {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.6em;
-  height: 3.6em;
-  margin-right: 0.7em;
-  vertical-align: middle;
-  background: url("../assets/chip.svg") center / contain no-repeat;
-  color: var(--c-accent);
-  filter: drop-shadow(0 0 6px rgb(var(--c-accent-rgb) / 0.3));
-}
-.md-typeset .grid.cards .chip-emblem svg {
-  width: 1.45em;
-  height: 1.45em;
-  max-height: none;
-  filter: drop-shadow(0 0 3px rgb(var(--c-accent-rgb) / 0.7));
-}
-
-/* «Проект» — четыре карточки сеткой 2×2, на узком экране — столбиком */
-.md-typeset .grid.cards.project {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-@media screen and (max-width: 44.9375em) {
-  .md-typeset .grid.cards.project {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
 
 /* Карточки одна под другой — оглавление глав: <div class="grid cards stack"> */
 .md-typeset .grid.cards.stack {
@@ -129,38 +100,3 @@
   color: var(--c-text-3);
 }
 
-
-/* Классы предметов — три карточки в ряд, верхняя грань цвета класса:
-     <div class="grid cards classes" markdown> … </div> */
-.md-typeset .grid.cards.classes {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-@media screen and (max-width: 44.9375em) {
-  .md-typeset .grid.cards.classes {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-.md-typeset .grid.cards.classes > ul > li {
-  border-top-width: 3px;
-}
-.md-typeset .grid.cards.classes > ul > li:has(.cls--common) {
-  border-top-color: var(--c-item-common);
-}
-.md-typeset .grid.cards.classes > ul > li:has(.cls--rare) {
-  border-top-color: var(--c-item-rare);
-}
-.md-typeset .grid.cards.classes > ul > li:has(.cls--ceiling) {
-  border-top-color: var(--c-item-ceiling);
-}
-.md-typeset .grid.cards.classes > ul > li:has(.cls--common):hover {
-  border-color: var(--c-item-common);
-  box-shadow: 0 0 16px rgb(var(--c-item-common-rgb, 147 170 176) / 0.2);
-}
-.md-typeset .grid.cards.classes > ul > li:has(.cls--rare):hover {
-  border-color: var(--c-item-rare);
-  box-shadow: 0 0 16px rgb(var(--c-accent-rgb) / 0.25);
-}
-.md-typeset .grid.cards.classes > ul > li:has(.cls--ceiling):hover {
-  border-color: var(--c-item-ceiling);
-  box-shadow: 0 0 16px rgb(var(--c-item-ceiling-rgb) / 0.25);
-}
