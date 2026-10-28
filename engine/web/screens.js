@@ -119,7 +119,11 @@ function players(round) {
     const effects = s.effects.map((e) => `[${effectText(e)}]`).join(" ");
     const hand = s.hand.length ? ` · ${s.hand.map((i) => ITEMS[i]).join(", ")}` : "";
     return el("div", { class: cls, onclick: alive ? () => pickPlayer(p) : null },
-      `${name} ${hp} ◆${s.chips} ${effects}`, el("span", { class: "dim" }, hand));
+      el("span", { class: "name" }, name), " ",
+      el("span", { class: "hp" }, hp), " ",
+      el("span", { class: "chips" }, `◆${s.chips}`), " ",
+      el("span", { class: "effects" }, effects),
+      el("span", { class: "dim" }, hand));
   }));
 }
 
