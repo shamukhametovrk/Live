@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="screen">
+    <header>
+      <span class="title">LIVE</span>
+      <span id="status">не подключено</span>
+    </header>
+
+    <section id="connect">
+      <p>&gt; адрес движка</p>
+      <form id="connect-form">
+        <input id="server" value="localhost:8000" spellcheck="false">
+        <button>Подключиться</button>
+      </form>
+    </section>
+
+    <section id="table" hidden></section>
+
+    <section id="feed" aria-live="polite"></section>
+
+    <div id="pause" hidden></div>
+  </main>
+
+  <script src="text.js"></script>
+  <script src="net.js"></script>
+  <script src="screens.js"></script>
+</body>
+</html>

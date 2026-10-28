@@ -1,0 +1,101 @@
+:root {
+  --bg: #0b0f0b;
+  --fg: #7dff9a;
+  --dim: #3c7a4a;
+  --hot: #ffb347;
+  --bad: #ff6b5e;
+  --glow: 0 0 6px rgba(125, 255, 154, 0.45);
+}
+
+* { box-sizing: border-box; }
+
+html { scrollbar-color: var(--dim) var(--bg); }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.5 "Cascadia Mono", "Consolas", "Courier New", monospace;
+  text-shadow: var(--glow);
+}
+
+.screen {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--dim);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.title { letter-spacing: 0.4em; }
+#status { color: var(--dim); }
+
+button, input {
+  font: inherit;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--dim);
+  padding: 4px 10px;
+  text-shadow: inherit;
+}
+button { cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--fg); }
+button:disabled { color: var(--dim); cursor: default; }
+button.on { background: var(--fg); color: var(--bg); text-shadow: none; }
+
+.dim { color: var(--dim); }
+.hot { color: var(--hot); }
+.bad { color: var(--bad); }
+
+.players { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-bottom: 24px; }
+.player { cursor: pointer; padding: 2px 6px; border: 1px solid transparent; }
+.player.active::before { content: "> "; }
+.player.target { border-color: var(--hot); }
+.player.dead { color: var(--dim); cursor: default; }
+
+.row { display: flex; justify-content: center; gap: 8px; margin: 24px 0 8px; }
+.chamber {
+  width: 56px;
+  text-align: center;
+  font-size: 22px;
+  padding: 8px 0;
+}
+.chamber small { display: block; font-size: 12px; color: var(--dim); }
+.chamber.picked { border-color: var(--hot); color: var(--hot); }
+.row-note { text-align: center; color: var(--dim); }
+
+.hand { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.actions { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+#feed {
+  margin-top: 24px;
+  border-top: 1px solid var(--dim);
+  padding-top: 8px;
+  height: 180px;
+  overflow-y: auto;
+  color: var(--dim);
+}
+#feed p { margin: 0; }
+#feed p:last-child { color: var(--fg); }
+#feed p:last-child::after { content: "_"; animation: blink 1s steps(1) infinite; }
+
+#pause {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(11, 15, 11, 0.85);
+  color: var(--hot);
+  font-size: 20px;
+}
+#pause[hidden] { display: none; }
+
+@keyframes blink { 50% { opacity: 0; } }
