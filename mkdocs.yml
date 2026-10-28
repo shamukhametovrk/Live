@@ -163,4 +163,5 @@ nav:
           - engine/decisions/0015-effects-are-data.md
           - engine/decisions/0016-spread-start-is-one-step.md
           - engine/decisions/0017-shot-is-its-own-rule.md
+          - engine/decisions/0018-one-table-tokens-ports.md
   - Клиент: client/index.md
