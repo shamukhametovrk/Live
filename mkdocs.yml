@@ -165,4 +165,5 @@ nav:
           - engine/decisions/0017-shot-is-its-own-rule.md
           - engine/decisions/0018-one-table-tokens-ports.md
       - Веб-клиент: engine/web-client.md
+      - Деплой: engine/deploy.md
   - Клиент: client/index.md

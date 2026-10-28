@@ -42,6 +42,8 @@ uv run python -m tools.net_bot --count 2
 uv run python -m tools.chronicle --seed 42 --players 3 --rounds 1
 ```
 
+Деплой (Docker, Fly.io) — в [документации](../docs/engine/deploy.md).
+
 ## Проверки
 
 ```bash
