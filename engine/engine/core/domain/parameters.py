@@ -21,3 +21,5 @@ DEAL_CLASS_ODDS = {
 }
 
 DEFAULT_ROUNDS = 3
+
+RECONNECT_WAIT = 60  # секунд
