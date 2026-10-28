@@ -15,6 +15,7 @@ from random import Random
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
+from starlette.types import Scope
 
 from ..core.application.ports import ClientID, Outgoing, Rejected
 from ..core.application.table import Table
@@ -44,6 +45,19 @@ class QueueSender:
         queue = self._queues.get(client)
         if queue is not None:
             queue.put_nowait(encode(out))
+
+
+class FreshStaticFiles(StaticFiles):
+    """Статика, которую браузер сверяет с сервером при каждой загрузке.
+
+    Без этого после обновления движка браузер берёт часть скриптов из
+    кэша и смешивает старый клиент с новым.
+    """
+
+    async def get_response(self, path: str, scope: Scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 
 
 class AsyncioTimer:
@@ -95,7 +109,7 @@ def create_app(rng: Random | None = None) -> FastAPI:
             sender.close(client)
             writer.cancel()
 
-    app.mount("/", StaticFiles(directory=WEB, html=True), name="web")
+    app.mount("/", FreshStaticFiles(directory=WEB, html=True), name="web")
     return app
 
 

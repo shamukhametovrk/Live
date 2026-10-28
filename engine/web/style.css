@@ -41,6 +41,9 @@
   --c-accent-2-rgb: var(--uv-rgb);
   --c-danger: var(--blood);
   --c-danger-rgb: var(--blood-rgb);
+  --c-item-common: var(--steel);
+  --c-item-rare: var(--cyan);
+  --c-item-ceiling: var(--amber);
   --c-chip: var(--amber);
   --c-chip-rgb: var(--amber-rgb);
 
@@ -214,7 +217,7 @@ input:focus, select:focus { outline: none; border-color: var(--c-accent); }
 
 .board {
   position: relative;
-  width: min(100%, calc(100vh - 190px));
+  width: min(100%, calc(100vh - 230px));
   min-width: 300px;
   aspect-ratio: 1;
   container-type: inline-size;
@@ -373,25 +376,36 @@ input:focus, select:focus { outline: none; border-color: var(--c-accent); }
 .chips-on .chip + .chip { margin-left: -0.9cqw; }
 
 .effect {
-  font: 1.5cqw var(--mono-font);
+  font-size: 2.2cqw;
   color: var(--c-accent-2);
-  border: 0.2cqw solid var(--c-accent-2);
-  border-radius: 0.6cqw;
-  padding: 0 0.5cqw;
-  box-shadow: 0 0 1cqw rgb(var(--c-accent-2-rgb) / 0.5);
+  filter: drop-shadow(0 0 0.6cqw rgb(var(--c-accent-2-rgb) / 0.8));
 }
 
-/* Предметы: рука на столе перед игроком */
+/* Значок: SVG-маска, залитая цветом текста */
+.icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  background: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+}
+
+/* Предметы: рука на столе перед игроком. Цвет — класс предмета */
 .item {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--c-text-3);
+  border: 1px solid currentColor;
   border-radius: 4px;
   background: var(--c-surface);
-  font-family: var(--heading-font);
   color: var(--c-text-2);
 }
+.item.common { color: var(--c-item-common); }
+.item.rare { color: var(--c-item-rare); }
+.item.ceiling { color: var(--c-item-ceiling); }
+.item .icon { width: 70%; height: 70%; }
 .hand-small {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -404,8 +418,8 @@ input:focus, select:focus { outline: none; border-color: var(--c-accent); }
 .hand-small .item {
   width: 3.4cqw;
   height: 3.4cqw;
-  font-size: 1.3cqw;
   border-radius: 0.6cqw;
+  border-color: rgb(255 255 255 / 0.12);
 }
 .my-hand {
   display: flex;
@@ -416,19 +430,24 @@ input:focus, select:focus { outline: none; border-color: var(--c-accent); }
   min-height: 56px;
 }
 .my-hand .item {
-  width: 52px;
-  height: 52px;
-  font-size: 14px;
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
 }
-.item.usable { cursor: pointer; border-color: var(--c-accent); color: var(--c-accent); }
-.item.usable:hover,
+.item.usable {
+  cursor: pointer;
+  box-shadow: 0 0 10px currentColor;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.item.usable:hover { transform: translateY(-4px); box-shadow: 0 0 18px currentColor; }
 .item.active {
-  background: var(--c-accent);
-  color: var(--c-bg);
-  box-shadow: 0 0 16px rgb(var(--c-accent-rgb) / 0.5);
+  background: currentColor;
+  transform: translateY(-6px);
 }
+.item.active .icon { background: var(--c-bg); }
 
 /* Предмет ждёт поля: подсказка в центре стола */
+.pending .icon { font-size: 3cqw; vertical-align: middle; }
 .pending {
   position: absolute;
   top: 62%;
@@ -463,6 +482,15 @@ input:focus, select:focus { outline: none; border-color: var(--c-accent); }
   box-shadow: none;
 }
 .prep-row { display: flex; flex-wrap: wrap; gap: 8px; }
+button.pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+}
+button.pick .icon { font-size: 20px; }
 .prep-chamber {
   display: flex;
   align-items: center;
@@ -502,6 +530,14 @@ input:focus, select:focus { outline: none; border-color: var(--c-accent); }
   box-shadow: 0 0 18px rgb(var(--c-danger-rgb) / 0.6);
 }
 .bubble.bad { border-color: var(--c-danger); color: var(--c-danger); }
+
+footer {
+  margin-top: 24px;
+  text-align: center;
+  font: 11px var(--mono-font);
+  color: var(--c-text-3);
+}
+footer a { color: var(--c-text-2); }
 
 /* ================================================================
    Пауза

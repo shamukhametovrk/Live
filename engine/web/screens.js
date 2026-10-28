@@ -178,7 +178,7 @@ function player(round, p) {
   s.chips ? el("div", { class: "chips" }, chipStack(s.chips)) : null,
   s.effects.length
     ? el("div", { class: "effects" }, s.effects.map((e) =>
-      el("span", { class: "effect", title: effectText(e) }, effectMark(e))))
+      el("span", { class: "effect", title: effectText(e) }, icon(EFFECT_ITEM[e.type]))))
     : null);
 }
 
@@ -202,19 +202,15 @@ function myHand(round, seat) {
 
 function itemTile(item, onclick, active) {
   return el("span", {
-    class: `item${onclick ? " usable" : ""}${active ? " active" : ""}`,
+    class: `item ${ITEM_CLASS[item] || ""}${onclick ? " usable" : ""}${active ? " active" : ""}`,
     title: ITEMS[item] || item,
     onclick,
-  }, initials(ITEMS[item] || item));
+  }, icon(item));
 }
 
-// Пока нет значков — первые буквы названия.
-function initials(name) {
-  return name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-}
-
-function effectMark(e) {
-  return initials(effectText(e));
+// Значок — маска: рисуется цветом текста (см. icons/README.md).
+function icon(item) {
+  return el("span", { class: "icon", style: `--icon:url("icons/${item}.svg")` });
 }
 
 function chipStack(n) {
@@ -272,7 +268,7 @@ function pendingPanel() {
   };
   const field = ui.pending.fields[0];
   return el("div", { class: "pending" },
-    el("div", {}, `${ITEMS[ui.pending.item]}: ${asks[field]}`),
+    el("div", {}, icon(ui.pending.item), ` ${asks[field]}`),
     field === "take" ? el("div", { class: "actions" },
       el("button", { onclick: () => fill("take", "item") }, "предмет"),
       el("button", { onclick: () => fill("take", "chip") }, "фишку")) : null);
@@ -295,9 +291,10 @@ function preparing(round, spread) {
   const prep = ui.prep;
   const kept = prep.keep.filter(Boolean).length;
   const items = pool.map((item, i) => el("button", {
-    class: prep.keep[i] ? "on" : "",
+    class: `pick ${prep.keep[i] ? "on" : ""}`,
+    title: ITEMS[item],
     onclick: () => { prep.keep[i] = !prep.keep[i]; render(ui.view); },
-  }, ITEMS[item], i >= seat.hand.length ? " ★" : ""));
+  }, icon(item), el("span", {}, ITEMS[item]), i >= seat.hand.length ? " ★" : ""));
   const left = seat.chips - prep.chips.reduce((a, b) => a + b, 0);
   const chambers = prep.chips.map((n, i) => el("div", { class: "prep-chamber" },
     el("span", {}, i + 1),
@@ -334,12 +331,28 @@ function onMessage(m) {
     m.target ?? m.player ?? m.owner ?? m.actor ?? m.shooter ?? null);
 }
 
+// Подпись: значок предмета и короткий итог; без предмета — слово.
 function caption(m) {
+  const sign = (n) => (n >= 0 ? `+${n}` : `${n}`);
   switch (m.type) {
     case "shot": return !m.loaded ? "щёлк" : m.damage === 0 ? "щит" : `−${m.damage}`;
     case "died": return "✝";
     case "chip_earned": return "+◆";
-    case "effect_added": return effectText(m.effect);
+    case "effect_added": return [icon(EFFECT_ITEM[m.effect.type])];
+    case "weight_seen": return [icon("one-eye"), m.weight === null ? "" : ` ${m.weight}`];
+    case "weights_seen": return [icon("wide-eyes"), m.weights === null ? "" : ` ${m.weights.join(" ")}`];
+    case "reversed": return [icon("reverse")];
+    case "cartridge_added": return [icon("more"), " +1"];
+    case "cartridge_removed": return [icon("scared"), " −1"];
+    case "peeked": return [icon("peek"), m.loaded ? " патрон" : " пусто"];
+    case "shaken": return [icon("shake")];
+    case "healed": return [icon(m.item), ` +${m.amount}`];
+    case "gambled": return [icon("dubious"), ` ${sign(m.amount)}`];
+    case "passed": return [icon("pass")];
+    case "item_stolen": return [icon("share"), " ", icon(m.item)];
+    case "chip_stolen": return [icon("share"), " ◆"];
+    case "jackpot": return [icon("jackpot"), " +3◆"];
+    case "wasted": return [icon(m.item), " впустую"];
     default: return describe(m);
   }
 }

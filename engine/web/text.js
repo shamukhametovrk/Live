@@ -21,6 +21,25 @@ const ITEMS = {
   "jackpot": "Джекпот",
 };
 
+// Класс предмета (см. каталог в правилах): от него цвет значка.
+const ITEM_CLASS = {
+  "one-eye": "common", "wide-eyes": "ceiling", "reverse": "common",
+  "more": "common", "scared": "common", "peek": "common", "shake": "ceiling",
+  "water": "common", "dubious": "common", "like-new": "ceiling",
+  "pass": "common", "double": "rare", "full-force": "rare", "shield": "rare",
+  "try-this": "rare", "play-along": "ceiling", "share": "rare",
+  "jackpot": "ceiling",
+};
+
+// Эффект рисуется значком предмета, который его оставил.
+const EFFECT_ITEM = {
+  double: "double",
+  full_force: "full-force",
+  shield: "shield",
+  play_along: "play-along",
+  try_this: "try-this",
+};
+
 // Какие поля предмет требует при применении (см. справочник движка).
 const ITEM_FIELDS = {
   "one-eye": ["chamber"],
