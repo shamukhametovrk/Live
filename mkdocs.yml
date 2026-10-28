@@ -158,4 +158,7 @@ nav:
           - engine/decisions/0009-revealed-positions-in-round.md
           - engine/decisions/0010-semantic-messages.md
           - engine/decisions/0011-rules-return-events-and-messages.md
+          - engine/decisions/0012-immutable-state-pure-rules.md
+          - engine/decisions/0013-events-and-visibility-function.md
+          - engine/decisions/0014-code-names-follow-rules.md
   - Клиент: client/index.md

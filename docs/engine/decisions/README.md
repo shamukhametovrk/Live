@@ -15,9 +15,12 @@
 | [0003](0003-rules-are-domain-functions.md) | Правила — функции домена |
 | [0004](0004-client-builds-world-view.md) | Клиент строит картину мира сам |
 | [0005](0005-fair-first-move-on-the-fly.md) | Справедливый первый ход — на лету |
-| [0006](0006-mutable-entities-in-repository.md) | Изменяемые сущности, агрегат живёт в репозитории |
+| [0006](0006-mutable-entities-in-repository.md) | ~~Изменяемые сущности, агрегат живёт в репозитории~~ — заменена 0012 |
 | [0007](0007-sampler-outside-core.md) | Библиотека выборки — вне ядра |
-| [0008](0008-match-not-party.md) | Партия в коде — `Match` |
+| [0008](0008-match-not-party.md) | ~~Партия в коде — `Match`~~ — заменена 0014 |
 | [0009](0009-revealed-positions-in-round.md) | Раскрытые позиции — часть раунда |
 | [0010](0010-semantic-messages.md) | Сообщения смысловые, клиент знает правила |
-| [0011](0011-rules-return-events-and-messages.md) | Правило возвращает и события, и сообщения |
+| [0011](0011-rules-return-events-and-messages.md) | ~~Правило возвращает и события, и сообщения~~ — заменена 0013 |
+| [0012](0012-immutable-state-pure-rules.md) | Неизменяемое состояние, правила — чистые функции |
+| [0013](0013-events-and-visibility-function.md) | Правило возвращает события, сообщения выводит видимость |
+| [0014](0014-code-names-follow-rules.md) | Имена в коде — как в правилах |

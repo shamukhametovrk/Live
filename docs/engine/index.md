@@ -39,7 +39,9 @@
 
 ## Открытые вопросы
 
-Сейчас нет.
+- Доменный слой (`architecture/domain/`) описывает старую модель с
+  изменяемыми сущностями. Переписать вместе с кодом по решениям
+  [0012](decisions/0012-immutable-state-pure-rules.md)–[0014](decisions/0014-code-names-follow-rules.md).
 
 ## Глоссарий
 
