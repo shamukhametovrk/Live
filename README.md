@@ -13,13 +13,7 @@
 ## Что где лежит
 
 ```text
-docs/                   исходники сайта (MkDocs Material)
-├── index.md            главная: три раздела
-├── rules/              правила: обзор, свод глав, каталог предметов, глоссарий
-├── engine/             движок: архитектура и журнал решений
-├── client/             клиент
-├── assets/             картинки для страниц
-└── stylesheets/        тема «Бутылочное стекло»: палитра, общее, карточки, правила
+docs/                   исходники сайта: правила, движок, клиент
 engine/                 движок на Python: код, тесты, свой pyproject.toml
 client/                 клиент (пока пусто)
 mkdocs.yml              настройки сайта и навигация
@@ -42,16 +36,6 @@ uv run mkdocs serve
 ```bash
 uv run mkdocs build --strict
 ```
-
-## Тесты движка
-
-```bash
-cd engine
-uv sync
-uv run pytest
-```
-
-Подробнее — в [engine/README.md](engine/README.md).
 
 ---
 
