@@ -19,10 +19,7 @@ from engine.core.domain.commands import (
     UseItem,
 )
 from engine.core.domain.state import Finished, InProgress, Settings
-from tests.engine.core.domain.test_random_games import (
-    game_command,
-    lobby_command,
-)
+from tools.bot import game_command, lobby_command
 
 
 @pytest.mark.parametrize(
