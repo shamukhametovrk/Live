@@ -86,6 +86,7 @@
 
 | Событие | Поля | Скрыто |
 | --- | --- | --- |
+| `GameStarted` | `players` | |
 | `RoundStarted` | `start_health`, `circle`, `first` | |
 | `SpreadStarted` | `size`, `offers` | `offers` — каждый видит только своё |
 | `Prepared` | `player` | |
