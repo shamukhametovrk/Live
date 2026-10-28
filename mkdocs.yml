@@ -139,10 +139,8 @@ nav:
           - Принципы: engine/architecture/zen/principles.md
           - Доменный слой:
               - engine/architecture/domain/README.md
-              - Игра: engine/architecture/domain/game.md
-              - Партия: engine/architecture/domain/match.md
-              - Подготовка: engine/architecture/domain/preparation.md
-              - Раунд: engine/architecture/domain/round.md
+              - Модель данных: engine/architecture/domain/state.md
+              - Правила: engine/architecture/domain/rules.md
           - engine/architecture/application/README.md
           - engine/architecture/adapters/README.md
       - Решения:
@@ -161,4 +159,6 @@ nav:
           - engine/decisions/0012-immutable-state-pure-rules.md
           - engine/decisions/0013-events-and-visibility-function.md
           - engine/decisions/0014-code-names-follow-rules.md
+          - engine/decisions/0015-effects-are-data.md
+          - engine/decisions/0016-spread-start-is-one-step.md
   - Клиент: client/index.md
