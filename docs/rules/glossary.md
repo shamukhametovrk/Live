@@ -4,6 +4,7 @@
 
 - [Активный игрок](chapters/turn.md#t-активный-игрок)
 - [Вес каморы](elements/chips.md#t-вес)
+- [Выбывший](elements/player.md#t-выбывший)
 - [Выдача](chapters/spread.md#t-выдача)
 - [Выстрел](chapters/turn.md#t-выстрел)
 - [Живой](elements/player.md#t-живой)
@@ -28,5 +29,6 @@
 - [Фишка](elements/chips.md#t-фишка)
 - [Ход](chapters/turn.md#t-ход)
 - [Холостой](chapters/turn.md#t-холостой)
+- [Хост](chapters/game.md#t-хост)
 - [Цель](chapters/turn.md#t-цель)
 - [Эффект](items/index.md#t-эффект)
