@@ -19,7 +19,13 @@ from engine.core.domain.errors import IllegalAction
 from engine.core.domain.events import Cancelled, Died, Loaded, Withdrew
 from engine.core.domain.ids import PlayerID
 from engine.core.domain.rules.handle import handle
-from engine.core.domain.state import InProgress, Lobby, Presence, Settings
+from engine.core.domain.state import (
+    Finished,
+    InProgress,
+    Lobby,
+    Presence,
+    Settings,
+)
 from tests.engine.core.domain.rules.helpers import A, B, C
 
 
@@ -115,3 +121,18 @@ def test_engine_and_players_cannot_swap_commands():
         run(lobby_of(A, B), A, Disconnect(B))
     with pytest.raises(IllegalAction, match="wrong_actor"):
         run(lobby_of(A, B), None, Start())
+
+
+def test_commands_go_only_to_their_stage():
+    lobby = lobby_of(A, B)
+    game = started(A, B)
+    finished = Finished((A, B), game.presence, ())
+    cases = [
+        (None, A, Start(), "no_game"),
+        (lobby, A, Shoot(0, B), "not_started"),
+        (game, A, Join(), "game_started"),
+        (finished, None, Disconnect(A), "game_finished"),
+    ]
+    for state, actor, cmd, code in cases:
+        with pytest.raises(IllegalAction, match=code):
+            run(state, actor, cmd)

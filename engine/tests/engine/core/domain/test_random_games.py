@@ -6,8 +6,6 @@
 
 from random import Random
 
-import pytest
-
 from engine.core.domain import parameters
 from engine.core.domain.catalog import CATALOG, Field
 from engine.core.domain.commands import (
@@ -156,10 +154,10 @@ def play(seed: int) -> tuple[object, int]:
     return game, MAX_STEPS
 
 
-@pytest.mark.parametrize("seed", range(GAMES))
-def test_random_game_finishes_keeping_invariants(seed):
-    game, steps = play(seed)
-    assert isinstance(game, Finished), f"no finish in {steps} steps"
+def test_random_games_finish_keeping_invariants():
+    for seed in range(GAMES):
+        game, steps = play(seed)
+        assert isinstance(game, Finished), f"seed {seed}: no finish in {steps}"
 
 
 def test_same_seed_same_game():

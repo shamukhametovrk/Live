@@ -13,6 +13,7 @@ from engine.core.domain.events import (
     ItemStolen,
     Wasted,
     WeightSeen,
+    WeightsSeen,
 )
 from engine.core.domain.rules.apply import apply
 from engine.core.domain.state import Chamber, Shield, Shooting, TryThis
@@ -168,3 +169,33 @@ def test_one_eye_reveals_weight_to_its_user():
     )
     assert events == [WeightSeen(A, 0, 3)]
     assert r.spread.revealed == {A: {0}}
+
+
+def test_reverse_flips_the_chamber():
+    r, _, _ = use(with_hand(Item.REVERSE), UseItem(Item.REVERSE, chamber=0))
+    assert not r.spread.chambers[0].loaded
+    r, _, _ = use(with_hand(Item.REVERSE), UseItem(Item.REVERSE, chamber=1))
+    assert r.spread.chambers[1].loaded
+
+
+def test_wide_eyes_reveals_every_weight():
+    spread = replace(shooting(True, False), chips=frozendict({B: (0, 4)}))
+    r, events, _ = use(
+        with_hand(Item.WIDE_EYES, spread=spread), UseItem(Item.WIDE_EYES)
+    )
+    assert events == [WeightsSeen(A, (1, 5))]
+    assert r.spread.revealed == {A: {0, 1}}
+
+
+def test_jackpot_gives_three_chips():
+    r, _, _ = use(with_hand(Item.JACKPOT), UseItem(Item.JACKPOT))
+    assert r.seats[A].chips == 3
+
+
+@pytest.mark.parametrize(("victim_chips", "moved"), [(2, True), (0, False)])
+def test_share_takes_one_chip(victim_chips, moved):
+    r = with_hand(Item.SHARE, others={B: seat(3, chips=victim_chips)})
+    r, _, _ = use(r, UseItem(Item.SHARE, player=B, take=Take.CHIP))
+    assert (r.seats[A].chips, r.seats[B].chips) == (
+        (1, victim_chips - 1) if moved else (0, 0)
+    )

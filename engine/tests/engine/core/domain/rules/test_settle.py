@@ -1,6 +1,8 @@
 from dataclasses import replace
 from random import Random
 
+import pytest
+
 from engine.core.domain.commands import Shoot
 from engine.core.domain.events import (
     Died,
@@ -11,11 +13,13 @@ from engine.core.domain.events import (
     SpreadEnded,
     TurnPassed,
 )
+from engine.core.domain.rules.effects import expired
 from engine.core.domain.rules.settle import settle
 from engine.core.domain.rules.shoot import shoot
 from engine.core.domain.state import (
     Double,
     Finished,
+    FullForce,
     InProgress,
     PlayAlong,
     Preparing,
@@ -24,6 +28,7 @@ from engine.core.domain.state import (
     RoundResult,
     Settings,
     Shield,
+    TryThis,
 )
 from tests.engine.core.domain.rules.helpers import (
     A,
@@ -107,18 +112,29 @@ def test_shield_lasts_through_the_next_turn_only():
     assert game.round.seats[A].effects == ()
 
 
-def test_named_target_lasts_until_its_owner_has_moved():
-    on_self = PlayAlong(1, B)
-    on_c = PlayAlong(1, A)
-    seats = {A: seat(3, on_self), B: seat(), C: seat(3, on_c)}
-    game = game_of(make_round(shooting(), seats=seats))
-    game = end_turn(game)  # ход A: наложено в этот ход — ещё не в силе
-    assert game.round.seats[A].effects == (on_self,)
-    game = end_turn(game)  # ход B
-    game = end_turn(game)  # ход C: его принуждение отработало
-    assert game.round.seats[C].effects == ()
-    game = end_turn(game)  # снова A
-    assert game.round.seats[A].effects == ()
+@pytest.mark.parametrize(
+    ("effect", "ended_turn", "ended_active", "gone"),
+    [
+        (Double(1), 1, A, True),
+        (FullForce(1), 5, A, False),
+        (Shield(1), 1, A, False),
+        (Shield(1), 2, B, True),
+        (PlayAlong(1, B), 1, A, False),  # на себя в свой ход — ещё не в силе
+        (PlayAlong(1, B), 2, B, False),  # чужой ход не в счёт
+        (PlayAlong(1, B), 4, A, True),  # отработал свой следующий ход
+        (TryThis(1, 0), 3, C, False),
+    ],
+)
+def test_effect_lifetimes(effect, ended_turn, ended_active, gone):
+    """Сроки эффектов; владелец — A."""
+    assert expired(effect, A, ended_turn, ended_active) is gone
+
+
+def test_dying_on_own_turn_ends_it_even_with_double():
+    seats = {A: seat(1, Double(1)), B: seat(), C: seat()}
+    game = game_of(make_round(shooting(True, False), seats=seats))
+    game, events = fire(game, A, Shoot(0, A))
+    assert events[-1] == TurnPassed(B, 2)
 
 
 def test_row_ending_mid_turn_keeps_the_turn():
