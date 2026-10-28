@@ -1,5 +1,19 @@
-# My
-trash/
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.pytest_cache/
+.ruff_cache/
+.venv/
+
 # MkDocs
 site/
-.venv/
+
+# Editors
+.vscode/
+
+# My
+trash/
