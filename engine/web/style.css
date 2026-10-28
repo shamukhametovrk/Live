@@ -481,27 +481,77 @@ input:focus, select:focus { outline: none; border-color: var(--c-accent); }
   font: 13px var(--mono-font);
   box-shadow: none;
 }
-.prep-row { display: flex; flex-wrap: wrap; gap: 8px; }
-button.pick {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  text-transform: none;
-  letter-spacing: 0;
-  font-size: 13px;
+.prep-modal { width: min(94%, 600px); }
+.prep-title {
+  font: 700 14px var(--heading-font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+  text-shadow: 0 0 8px rgb(var(--c-accent-rgb) / 0.6);
+  margin-bottom: 12px;
 }
-button.pick .icon { font-size: 20px; }
-.prep-chamber {
+.shelf-label {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 6px;
-  border: 1px solid var(--c-border);
-  border-radius: 4px;
+  gap: 8px;
+  margin: 12px 0 6px;
+  font: 12px var(--mono-font);
+  color: var(--c-text-2);
 }
-.prep-chamber button { padding: 0 8px; }
-.modal .chip { width: 12px; height: 12px; }
-.modal .chips .chip + .chip { margin-left: -5px; }
+
+/* Полки: рука — 8 слотов, сброс — что не взяли */
+.shelf {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 52px;
+  padding: 6px;
+  border-radius: 6px;
+}
+.hand-shelf { background: rgb(var(--c-accent-rgb) / 0.05); border: 1px solid var(--c-border); }
+.drop-shelf { border: 1px dashed var(--c-border); align-items: center; }
+.drop-shelf .item { opacity: 0.55; }
+.shelf .item, .shelf .slot { width: 46px; height: 46px; border-radius: 6px; }
+.shelf .slot { border: 1px dashed var(--c-border); }
+
+/* Выдача: новые предметы вылетают по одному */
+.shelf .item.fresh { animation: deal-in 0.45s ease-out both; }
+@keyframes deal-in {
+  0%   { opacity: 0; transform: translateY(40px) scale(0.4) rotate(-20deg); }
+  70%  { opacity: 1; transform: translateY(-6px) scale(1.15); box-shadow: 0 0 24px currentColor; }
+  100% { transform: none; }
+}
+
+.item-hint {
+  min-height: 20px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--c-text-2);
+}
+.item-hint .icon { color: var(--c-accent); }
+.item-hint b { color: var(--c-text); font-weight: 600; }
+
+/* Мини-ряд: клик кладёт фишку, клик по фишке или правый клик — забирает */
+.prep-row { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 6px; }
+.chamber.prep {
+  width: 34px;
+  height: 54px;
+  border-width: 1px;
+  border-radius: 17px;
+  justify-content: flex-start;
+  flex-direction: column;
+  padding-top: 8px;
+  gap: 4px;
+}
+.chamber.prep .core { width: 12px; height: 12px; border-width: 1px; }
+.chamber.prep .chips-on {
+  position: static;
+  flex-direction: column;
+  cursor: pointer;
+}
+.modal .chip { width: 14px; height: 14px; }
+.modal .chips .chip + .chip { margin-left: -6px; }
+.modal .chips-on .chip + .chip { margin: -9px 0 0; }
 
 /* Подписи: всплывают у игрока и тают */
 .bubbles {

@@ -12,7 +12,7 @@ const $ = (id) => document.getElementById(id);
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
-    if (k === "onclick") node.onclick = v;
+    if (k.startsWith("on")) node[k] = v;
     else if (k === "class") node.className = v;
     else if (k === "style") node.style.cssText = v;
     else if (v !== false && v !== null && v !== undefined) node.setAttribute(k, v);
@@ -276,7 +276,10 @@ function pendingPanel() {
       el("button", { onclick: () => fill("take", "chip") }, "фишку")) : null);
 }
 
-// Начало ряда — окно поверх стола
+// Начало ряда — окно поверх стола: две полки (рука и сброс) и мини-ряд
+// для фишек.
+
+const HAND_LIMIT = 8;
 
 function preparing(round, spread) {
   const me = Net.me;
@@ -288,33 +291,90 @@ function preparing(round, spread) {
   const pool = [...seat.hand, ...spread.offer];
   const key = JSON.stringify([round.turn, spread.size, pool]);
   if (!ui.prep || ui.prep.key !== key) {
-    ui.prep = { key, keep: pool.map((_, i) => i < 8), chips: Array(spread.size).fill(0) };
+    // Оставить выгодно всё, что влезает: лишнее сразу ложится в сброс.
+    ui.prep = {
+      key,
+      keep: pool.map((_, i) => i < HAND_LIMIT),
+      chips: Array(spread.size).fill(0),
+      at: Date.now(),
+      hint: null,
+    };
   }
   const prep = ui.prep;
   const kept = prep.keep.filter(Boolean).length;
-  const items = pool.map((item, i) => el("button", {
-    class: `pick ${prep.keep[i] ? "on" : ""}`,
-    title: ITEMS[item],
-    onclick: () => { prep.keep[i] = !prep.keep[i]; render(ui.view); },
-  }, icon(item), el("span", {}, ITEMS[item]), i >= seat.hand.length ? " ★" : ""));
   const left = seat.chips - prep.chips.reduce((a, b) => a + b, 0);
-  const chambers = prep.chips.map((n, i) => el("div", { class: "prep-chamber" },
-    el("span", {}, i + 1),
-    el("span", { class: "chips" }, chipStack(n)),
-    el("button", { disabled: left <= 0, onclick: () => { prep.chips[i]++; render(ui.view); } }, "+"),
-    el("button", { disabled: n <= 0, onclick: () => { prep.chips[i]--; render(ui.view); } }, "−")));
-  return el("div", { class: "modal" },
-    el("p", {}, `Рука: ${kept} из 8`), el("div", { class: "hand" }, items),
-    seat.chips ? el("p", {}, "Фишки на каморы: ", chipStack(left)) : null,
-    seat.chips ? el("div", { class: "prep-row" }, chambers) : null,
+  const redraw = () => render(ui.view);
+
+  // Новые предметы вылетают по одному, как при раздаче. Перерисовка
+  // продолжает анимацию с того же места, а не начинает заново.
+  const since = Date.now() - prep.at;
+  const tile = (i) => {
+    const item = pool[i];
+    const fresh = i >= seat.hand.length;
+    const order = i - seat.hand.length;
+    return el("span", {
+      class: `item ${ITEM_CLASS[item] || ""} usable${fresh ? " fresh" : ""}`,
+      style: fresh ? `animation-delay:${order * 160 - since}ms` : null,
+      onclick: () => {
+        if (!prep.keep[i] && kept >= HAND_LIMIT) return;
+        prep.keep[i] = !prep.keep[i];
+        redraw();
+      },
+      onmouseenter: () => { prep.hint = item; showHint(item); },
+    }, icon(item));
+  };
+  const handIdx = pool.map((_, i) => i).filter((i) => prep.keep[i]);
+  const dropIdx = pool.map((_, i) => i).filter((i) => !prep.keep[i]);
+  const slots = Array.from({ length: HAND_LIMIT }, (_, k) =>
+    k < handIdx.length ? tile(handIdx[k]) : el("span", { class: "slot" }));
+
+  const chambers = prep.chips.map((n, i) => el("div", {
+    class: `chamber prep${left > 0 ? " live" : ""}`,
+    onclick: () => { if (left > 0) { prep.chips[i]++; redraw(); } },
+    oncontextmenu: (e) => {
+      e.preventDefault();
+      if (n > 0) { prep.chips[i]--; redraw(); }
+    },
+  },
+  el("span", { class: "core" }),
+  n ? el("span", {
+    class: "chips-on",
+    title: "забрать фишку",
+    onclick: (e) => { e.stopPropagation(); prep.chips[i]--; redraw(); },
+  }, chipStack(n)) : null));
+
+  const ready = kept <= HAND_LIMIT && left === 0;
+  return el("div", { class: "modal prep-modal" },
+    el("div", { class: "prep-title" }, `Новый ряд · ${spread.size} камор`),
+    el("div", { class: "shelf-label" }, `рука ${kept}/${HAND_LIMIT}`),
+    el("div", { class: "shelf hand-shelf" }, slots),
+    el("div", { class: "shelf-label" }, "сброс"),
+    el("div", { class: "shelf drop-shelf" },
+      dropIdx.length ? dropIdx.map(tile) : el("span", { class: "dim" }, "пусто")),
+    el("div", { class: "item-hint", id: "item-hint" }, hintText(prep.hint)),
+    seat.chips ? [
+      el("div", { class: "shelf-label" }, "фишки на каморы ",
+        el("span", { class: "chips" }, chipStack(left))),
+      el("div", { class: "prep-row" }, chambers),
+    ] : null,
     el("div", { class: "actions" }, el("button", {
-      disabled: kept > 8 || left !== 0,
+      disabled: !ready,
       onclick: () => Net.send({
         type: "prepare",
         hand: pool.filter((_, i) => prep.keep[i]),
         chips: prep.chips,
       }),
-    }, "Готово")));
+    }, left ? `Разложите фишки: ${left}` : "Готово")));
+}
+
+function hintText(item) {
+  if (!item) return "наведите на предмет — что он делает";
+  return [icon(item), el("b", {}, ` ${ITEMS[item]}`), ` — ${ITEM_HINTS[item] || ""}`];
+}
+
+function showHint(item) {
+  const node = document.getElementById("item-hint");
+  if (node) node.replaceChildren(...[hintText(item)].flat());
 }
 
 // Конец игры
