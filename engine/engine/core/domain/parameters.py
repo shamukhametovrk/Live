@@ -23,3 +23,4 @@ DEAL_CLASS_ODDS = {
 DEFAULT_ROUNDS = 3
 
 RECONNECT_WAIT = 60  # секунд
+RESET_WAIT = 10  # секунд от конца игры до пустого стола

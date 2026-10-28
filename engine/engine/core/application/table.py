@@ -75,6 +75,7 @@ _LOBBY_EVENTS = (
     GameStarted,
 )
 _ENGINE_COMMANDS = (Disconnect, Reconnect, Timeout)
+_RESET = "reset"  # ключ таймера очистки стола
 
 
 class Table:
@@ -195,11 +196,24 @@ class Table:
         if outcome.game is None:  # хост ушёл — игры и токенов больше нет
             self._seats.clear()
             self._tokens.clear()
+        elif isinstance(outcome.game, Finished) and not isinstance(
+            before, Finished
+        ):
+            self._timer.start(_RESET, parameters.RESET_WAIT, self._reset)
         else:
             gone = set(_players(before)) - set(_players(outcome.game))
             for client, player in list(self._seats.items()):
                 if player in gone:
                     del self._seats[client]
+
+    def _reset(self) -> None:
+        """Пустой стол после конца игры: можно садиться заново."""
+        self._game = None
+        self._history.clear()
+        self._seats.clear()
+        self._tokens.clear()
+        for client in sorted(self._clients):
+            self._send_snapshot(client)
 
     def _send_snapshot(self, client: ClientID) -> None:
         game = self._game

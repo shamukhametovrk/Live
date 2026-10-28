@@ -263,7 +263,8 @@ function finished(view) {
     `игрок ${p}: побед ${wins[p] || 0}`,
     view.presence[p] === "withdrawn" ? " (выбыл)" : "",
     p === Net.me ? " — вы" : ""));
-  return el("div", {}, el("p", {}, "Игра окончена."), el("ul", {}, rows),
+  return el("div", {}, el("p", {}, "Игра окончена. Скоро стол опустеет."),
+    el("ul", {}, rows),
     el("div", { class: "actions" },
       el("button", { onclick: () => Net.send({ type: "history" }) }, "История")));
 }

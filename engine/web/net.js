@@ -7,6 +7,7 @@ const Net = {
   me: null,         // номер игрока, если сели за стол
   waiting: false,   // ждём ответа на запрос снимка
   dirty: false,     // после запроса пришли новые сообщения
+  greeting: false,  // ждём снимок, который движок шлёт при подключении
   onSnapshot: () => {},
   onLine: () => {},
 
@@ -46,6 +47,7 @@ const Net = {
     switch (data.type) {
       case "welcome":
         if (this.me === null) this.client = data.client;
+        this.greeting = true;  // следом — снимок до ответа на resume
         break;
       case "token":
         this.me = this.client;
@@ -60,14 +62,14 @@ const Net = {
         break;
       case "rejected":
         this.onLine(REJECTIONS[data.code] || data.code, "rejected");
-        if (data.code === "bad_token") {
-          localStorage.removeItem(this.key());
-          this.me = null;
-        }
+        if (data.code === "bad_token") this.forget();
         break;
       case "snapshot":
         this.waiting = false;
         if (this.dirty) { this.askSnapshot(); break; }
+        // Пустой стол у севшего — стол очищен, места больше нет.
+        if (this.greeting) this.greeting = false;
+        else if (data.view === null && this.me !== null) this.forget();
         this.onSnapshot(data.view);
         break;
       case "history":
@@ -75,6 +77,11 @@ const Net = {
         console.log(data.events);
         break;
     }
+  },
+
+  forget() {
+    localStorage.removeItem(this.key());
+    this.me = null;
   },
 
   key() { return `live-token:${this.server}`; },

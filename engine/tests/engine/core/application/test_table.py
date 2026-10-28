@@ -185,3 +185,21 @@ def test_history_only_after_finish():
     table.receive(A, AskHistory())
     (history,) = out.take(A)
     assert isinstance(history, History) and history.events[0] == Joined(1)
+
+
+def test_table_empties_after_finish_and_a_new_game_can_gather():
+    table, out, clock, tokens = seated(A, B)
+    table.receive(A, Start())
+    table.disconnect(B)
+    clock.fire(2)  # B выбыл — игра окончена
+    delay, _ = clock.timers["reset"]
+    assert delay == parameters.RESET_WAIT
+    out.take(A)
+    clock.fire("reset")
+    assert out.take(A) == [Snapshot(None)]
+    table.receive(A, Resume(tokens[A]))
+    assert out.take(A) == [Rejected("bad_token")]
+    table.connect(B)
+    for c in (A, B):
+        table.receive(c, Join())
+    assert isinstance(table._game, Lobby) and table._game.players == (1, 2)
