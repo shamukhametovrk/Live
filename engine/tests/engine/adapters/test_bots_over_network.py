@@ -4,6 +4,7 @@ import asyncio
 import random
 import socket
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -23,10 +24,12 @@ def free_port() -> int:
 @pytest.fixture
 def engine_url():
     port = free_port()
+    # Тем же Python, что и тесты, без обёртки uv: иначе terminate() убьёт
+    # обёртку, а сервер останется жить (так бывает на Windows).
     server = subprocess.Popen(
         [
-            "uv",
-            "run",
+            sys.executable,
+            "-m",
             "uvicorn",
             "engine.adapters.websocket:create_app",
             "--factory",
