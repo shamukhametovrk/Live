@@ -18,21 +18,25 @@
 ## Модули
 
 ```text
+ids.py         идентификатор игрока
+parameters.py  числа игры
+catalog.py     справочник предметов: класс, поля применения, эффект
 state.py       модель данных, включая эффекты
-catalog.py     предметы: класс, какие параметры нужны
 commands.py    команды
 events.py      события
+errors.py      IllegalAction
 rules/
-  handle.py    вход: пауза, кто действует, выбор правила по стадии
+  handle.py    вход: стадия, пауза, кто действует → правило
   lobby.py     join, leave, change_settings, start
-  presence.py  disconnect, reconnect, timeout / withdraw
-  prepare.py   начало ряда: start_spread, prepare, load
+  presence.py  disconnect, reconnect, timeout
+  round.py     start_round
+  prepare.py   начало ряда: deal, prepare, load_if_ready
   shoot.py     выстрел
-  apply.py     применение предмета: по ветке на предмет
-  effects.py   add_effect, expired
-  settle.py    последствия: гибель → конец раунда → конец хода → конец ряда
-  round.py     start_round, finish
-visibility.py  view, project
+  apply.py     применение предмета: общие проверки и ветка на предмет
+  chambers.py  использовать камору — общее для выстрела и предметов
+  effects.py   find, in_force, expired
+  settle.py    последствия: гибель → конец раунда и игры → конец хода → конец ряда
+visibility.py  view, project (ещё не написано)
 ```
 
 Прикладной слой вызывает только `handle` и функции видимости.
