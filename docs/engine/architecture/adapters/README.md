@@ -12,6 +12,12 @@
 
 Таймер — `loop.call_later` с отменой по ключу.
 
+Запуск:
+
+```bash
+uv run uvicorn engine.adapters.websocket:create_app --factory
+```
+
 ## JSON
 
 Каждое сообщение в обе стороны — объект с полем `type`:
