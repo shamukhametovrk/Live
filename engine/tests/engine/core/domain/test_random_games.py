@@ -1,7 +1,9 @@
 """Сквозные игры: случайные игроки от первого Join до конца игры.
 
 Бот шлёт случайные, иногда недопустимые команды через вход в домен,
-теряет связь и выбывает. После каждого шага проверяются инварианты.
+теряет связь и выбывает. После каждого шага проверяются инварианты и
+главное правило видимости: снимок + сообщения = снимок. Каждый игрок
+держит картину мира (эталон из world.py) — так же, как будет держать клиент.
 """
 
 from random import Random
@@ -23,6 +25,7 @@ from engine.core.domain.commands import (
 from engine.core.domain.errors import IllegalAction
 from engine.core.domain.events import RoundStarted, SpreadStarted
 from engine.core.domain.ids import PlayerID
+from engine.core.domain.messages import Left
 from engine.core.domain.rules.handle import handle
 from engine.core.domain.state import (
     Finished,
@@ -33,6 +36,8 @@ from engine.core.domain.state import (
     Settings,
     Shooting,
 )
+from engine.core.domain.visibility import project, view
+from tests.engine.core.domain.world import apply
 
 GAMES = 300
 MAX_STEPS = 5000
@@ -130,10 +135,27 @@ def check_invariants(before, after, events) -> None:
                     assert new == old
 
 
+def check_worlds(worlds: dict, game, events) -> None:
+    """Картина мира каждого игрока совпадает с его новым снимком."""
+    for p in list(worlds):
+        for event in events:
+            worlds[p] = apply(worlds[p], project(event, p))
+        if any(isinstance(ev, Left) and ev.player == p for ev in events):
+            del worlds[p]
+        elif game is None:
+            assert worlds[p] is None
+        else:
+            assert worlds[p] == view(game, p), f"player {p}"
+    if game is not None:
+        for p in game.players:
+            worlds.setdefault(p, view(game, p))  # пришёл — получил снимок
+
+
 def play(seed: int) -> tuple[object, int]:
     rng = Random(seed)
     seats = rng.randint(*parameters.PLAYERS)
     game = None
+    worlds: dict = {}
     for step in range(MAX_STEPS):
         if isinstance(game, Finished):
             return game, step
@@ -148,9 +170,11 @@ def play(seed: int) -> tuple[object, int]:
         except IllegalAction:
             continue
         check_invariants(game, outcome.game, outcome.events)
+        check_worlds(worlds, outcome.game, outcome.events)
         game = outcome.game
         if game is None:  # хост ушёл из лобби — начинаем заново
             seats = rng.randint(*parameters.PLAYERS)
+            worlds.clear()
     return game, MAX_STEPS
 
 
