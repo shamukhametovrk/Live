@@ -14,7 +14,9 @@ const Net = {
     this.server = server;
     const saved = this.saved();
     this.me = saved ? saved.player : null;
-    const ws = new WebSocket(`ws://${server}/ws`);
+    // За HTTPS браузер пускает только защищённый сокет.
+    const scheme = location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${scheme}://${server}/ws`);
     this.ws = ws;
     ws.onopen = () => {
       setStatus(`подключено к ${server}`);
