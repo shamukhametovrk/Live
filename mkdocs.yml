@@ -140,6 +140,7 @@ nav:
           - Доменный слой:
               - engine/architecture/domain/README.md
               - Модель данных: engine/architecture/domain/state.md
+              - Команды и события: engine/architecture/domain/commands.md
               - Правила: engine/architecture/domain/rules.md
           - engine/architecture/application/README.md
           - engine/architecture/adapters/README.md

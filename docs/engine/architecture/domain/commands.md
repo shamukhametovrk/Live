@@ -1,0 +1,135 @@
+[← Доменный слой](README.md)
+
+# Команды и события
+
+**Команда** — то, что просит изменить состояние. **Событие** — полная
+правда о том, что изменилось, включая скрытое. Что из события узнаёт
+каждый игрок, решает модуль видимости (см.
+[0013](../../decisions/0013-events-and-visibility-function.md)); кто что
+видит по правилам — в [видимости](../../../rules/visibility.md).
+
+На каждое видимое изменение есть своё событие, даже если клиент мог бы
+вывести его сам: гибель, передача хода, конец ряда и раунда.
+
+## Команды
+
+Кто действует (`actor`), команде передаёт адаптер; в самой команде его
+нет.
+
+| Команда | Поля | Кто | Стадия |
+| --- | --- | --- | --- |
+| `Join` | — | игрок | `Lobby` |
+| `Leave` | — | игрок | `Lobby` |
+| `ChangeSettings` | `settings` | хост | `Lobby` |
+| `Start` | — | хост | `Lobby` |
+| `Prepare` | `hand`, `chips` | живой игрок | начало ряда |
+| `Shoot` | `chamber`, `target` | активный | стрельба |
+| `UseItem` | `item`, `player?`, `target?`, `chamber?`, `take?` | активный | стрельба |
+| `Disconnect` | `player` | движок | после первого Join |
+| `Reconnect` | `player` | движок | после первого Join |
+| `Timeout` | `player` | движок | после первого Join |
+
+`Timeout` в лобби — уход из-за стола, в игре — выбывание.
+
+`UseItem` одна на все предметы. Какие поля нужны предмету, сказано в
+[каталоге](#каталог-предметов); лишние поля и недостающие — отказ.
+`take` — что забрать у соперника: `ITEM` или `CHIP`.
+
+## Каталог предметов
+
+`catalog.py` — данные о каждом предмете. Что предмет делает — на его
+странице в [правилах](../../../rules/items/index.md).
+
+| `Item` | Предмет | Класс | Поля `UseItem` | Эффект |
+| --- | --- | --- | --- | --- |
+| `ONE_EYE` | Одним глазом | обычный | `chamber` | |
+| `WIDE_EYES` | Во все глаза | потолочный | — | |
+| `REVERSE` | Реверс | обычный | `chamber` | |
+| `MORE` | Хочу ещё | обычный | — | |
+| `SCARED` | Мне страшно | обычный | — | |
+| `PEEK` | Что тут у нас | обычный | `chamber` | |
+| `SHAKE` | ХАХхаахХАх | потолочный | — | |
+| `WATER` | Глоток воды | обычный | — | |
+| `DUBIOUS` | Сомнительное удовольствие | обычный | — | |
+| `LIKE_NEW` | Как новый | потолочный | — | |
+| `PASS` | Пасс | обычный | — | |
+| `DOUBLE` | Дубль | редкий | — | `Double` |
+| `FULL_FORCE` | Со всей дури | редкий | — | `FullForce` |
+| `SHIELD` | Настроечный щит | редкий | — | `Shield` |
+| `TRY_THIS` | Попробуй вот эту | редкий | `player`, `chamber` | `TryThis` на `player` |
+| `PLAY_ALONG` | Подыграй мне | потолочный | `player`, `target` | `PlayAlong` на `player` |
+| `SHARE` | Пора делиться | редкий | `player`, `take` | |
+| `JACKPOT` | Джекпот | потолочный | — | |
+
+`player` у «Пора делиться» — соперник, не сам применивший.
+
+## События
+
+В колонке «Скрыто» — поля, которые видит не каждый. Остальное видят
+все.
+
+### Лобби и присутствие
+
+| Событие | Поля | Скрыто |
+| --- | --- | --- |
+| `Joined` | `player` | |
+| `Left` | `player` | |
+| `SettingsChanged` | `settings` | |
+| `Cancelled` | — | |
+| `Disconnected` | `player` | |
+| `Reconnected` | `player` | |
+| `Withdrew` | `player` | |
+
+`Cancelled` — хост ушёл, игры не будет.
+
+### Раунд и ряд
+
+| Событие | Поля | Скрыто |
+| --- | --- | --- |
+| `RoundStarted` | `start_health`, `circle`, `first` | |
+| `SpreadStarted` | `size`, `offers` | `offers` — каждый видит только своё |
+| `Prepared` | `player` | |
+| `Loaded` | `offers`, `hands`, `chips`, `loaded`, `announced` | `chips` — каждый видит только свои; `loaded` — никто |
+| `SpreadEnded` | — | |
+| `RoundEnded` | `winner` | |
+| `GameFinished` | `winners` | |
+
+`Prepared` говорит только, что игрок решил. Что выпало каждому и что он
+оставил, все узнают из `Loaded`, когда решили все.
+
+### Ход
+
+| Событие | Поля | Скрыто |
+| --- | --- | --- |
+| `Shot` | `shooter`, `chamber`, `target`, `loaded`, `damage` | |
+| `ChipEarned` | `player` | |
+| `Died` | `player` | |
+| `TurnPassed` | `active`, `turn` | |
+| `EffectAdded` | `owner`, `effect` | |
+| `EffectRemoved` | `owner`, `effect` | |
+
+`EffectRemoved` — и когда эффект сработал, и когда истёк его срок.
+
+### Предметы
+
+Применённый предмет уходит из руки — это следует из любого события
+ниже. Предметы с эффектом дают `EffectAdded`.
+
+| Событие | Предмет | Поля | Скрыто |
+| --- | --- | --- | --- |
+| `WeightSeen` | Одним глазом | `actor`, `chamber`, `weight` | `weight` — видит только `actor` |
+| `WeightsSeen` | Во все глаза | `actor`, `weights` | `weights` — видит только `actor` |
+| `Reversed` | Реверс | `actor`, `chamber`, `now_loaded` | `now_loaded` — никто |
+| `CartridgeAdded` | Хочу ещё | `actor`, `chamber` | `chamber` — никто |
+| `CartridgeRemoved` | Мне страшно | `actor`, `chamber` | `chamber` — никто |
+| `Peeked` | Что тут у нас | `actor`, `chamber`, `loaded` | |
+| `Shaken` | ХАХхаахХАх | `actor`, `loaded` | `loaded` — никто |
+| `Healed` | Глоток воды, Как новый | `actor`, `item`, `amount` | |
+| `Gambled` | Сомнительное удовольствие | `actor`, `won`, `amount` | |
+| `Passed` | Пасс | `actor` | |
+| `ItemStolen` | Пора делиться | `actor`, `victim`, `item` | |
+| `ChipStolen` | Пора делиться | `actor`, `victim` | |
+| `Jackpot` | Джекпот | `actor` | |
+| `Wasted` | любой | `actor`, `item` | |
+
+`loaded` у `Shaken` и `Loaded` — новое содержимое всех камор.
